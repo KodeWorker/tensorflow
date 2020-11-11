@@ -22930,6 +22930,25 @@ op {
   is_stateful: true
 }
 op {
+  name: "MergeDITCheckpoints"
+  input_arg {
+    name: "checkpoint_prefixes"
+    type: DT_STRING
+  }
+  input_arg {
+    name: "destination_prefix"
+    type: DT_STRING
+  }
+  attr {
+    name: "delete_old_dirs"
+    type: "bool"
+    default_value {
+      b: true
+    }
+  }
+  is_stateful: true
+}
+op {
   name: "Mfcc"
   input_arg {
     name: "spectrogram"

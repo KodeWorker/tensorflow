@@ -200,6 +200,7 @@ bool IsWhitelistedFlexOp(const std::string& tensorflow_op_name) {
           "Mean",
           "Merge",
           "MergeV2Checkpoints",
+		  "MergeDITCheckpoints",
           "Mfcc",
           "Min",
           "Minimum",
