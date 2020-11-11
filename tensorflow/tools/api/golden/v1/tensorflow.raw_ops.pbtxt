@@ -2289,6 +2289,10 @@ tf_module {
     argspec: "args=[\'checkpoint_prefixes\', \'destination_prefix\', \'delete_old_dirs\', \'name\'], varargs=None, keywords=None, defaults=[\'True\', \'None\'], "
   }
   member_method {
+    name: "MergeDITCheckpoints"
+    argspec: "args=[\'checkpoint_prefixes\', \'destination_prefix\', \'delete_old_dirs\', \'name\'], varargs=None, keywords=None, defaults=[\'True\', \'None\'], "
+  }
+  member_method {
     name: "Mfcc"
     argspec: "args=[\'spectrogram\', \'sample_rate\', \'upper_frequency_limit\', \'lower_frequency_limit\', \'filterbank_channel_count\', \'dct_coefficient_count\', \'name\'], varargs=None, keywords=None, defaults=[\'4000\', \'20\', \'40\', \'13\', \'None\'], "
   }
@@ -3429,6 +3433,10 @@ tf_module {
     argspec: "args=[\'prefix\', \'tensor_names\', \'shape_and_slices\', \'dtypes\', \'name\'], varargs=None, keywords=None, defaults=[\'None\'], "
   }
   member_method {
+    name: "RestoreDIT"
+    argspec: "args=[\'prefix\', \'tensor_names\', \'shape_and_slices\', \'dtypes\', \'name\'], varargs=None, keywords=None, defaults=[\'None\'], "
+  }
+  member_method {
     name: "RetrieveTPUEmbeddingADAMParameters"
     argspec: "args=[\'num_shards\', \'shard_id\', \'table_id\', \'table_name\', \'config\', \'name\'], varargs=None, keywords=None, defaults=[\'-1\', \'\', \'\', \'None\'], "
   }
@@ -3558,6 +3566,10 @@ tf_module {
   }
   member_method {
     name: "SaveV2"
+    argspec: "args=[\'prefix\', \'tensor_names\', \'shape_and_slices\', \'tensors\', \'name\'], varargs=None, keywords=None, defaults=[\'None\'], "
+  }
+  member_method {
+    name: "SaveDIT"
     argspec: "args=[\'prefix\', \'tensor_names\', \'shape_and_slices\', \'tensors\', \'name\'], varargs=None, keywords=None, defaults=[\'None\'], "
   }
   member_method {
