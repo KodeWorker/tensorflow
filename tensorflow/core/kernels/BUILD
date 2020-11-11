@@ -3289,6 +3289,7 @@ cc_library(
         ":restore_op",
         ":save_op",
         ":save_restore_v2_ops",
+		":save_restore_dit_ops",
         ":text_line_reader_op",
         ":tf_record_reader_op",
         ":whole_file_read_ops",
@@ -3362,6 +3363,12 @@ tf_kernel_library(
 tf_kernel_library(
     name = "save_restore_v2_ops",
     prefix = "save_restore_v2_ops",
+    deps = SAVE_RESTORE_DEPS,
+)
+
+tf_kernel_library(
+    name = "save_restore_dit_ops",
+    prefix = "save_restore_dit_ops",
     deps = SAVE_RESTORE_DEPS,
 )
 
@@ -6553,6 +6560,7 @@ filegroup(
         "save_op.cc",
         "save_restore_tensor.cc",
         "save_restore_v2_ops.cc",
+		"save_restore_dit_ops.cc",
         "scatter_nd_op.cc",
         "scatter_nd_op_cpu_impl_0.cc",
         "scatter_nd_op_cpu_impl_1.cc",
