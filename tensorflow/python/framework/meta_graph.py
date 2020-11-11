@@ -219,9 +219,11 @@ def _get_kind_name(item):
   return kind
 
 
-SAVE_AND_RESTORE_OPS = ["SaveV2",
+SAVE_AND_RESTORE_OPS = ["SaveDIT",
+                        "SaveV2",
                         "Save", "SaveSlice",
                         "LegacySave", "LegacySaveSlice",
+                        "RestoreDIT",
                         "RestoreV2",
                         "Restore", "RestoreSlice",
                         "LegacyRestore", "LegacyRestoreSlice"]

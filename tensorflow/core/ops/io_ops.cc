@@ -57,6 +57,90 @@ Status TwoElementOutput(InferenceContext* c) {
 
 }  // namespace
 
+REGISTER_OP("SaveDIT")
+    .Input("prefix: string")
+    .Input("tensor_names: string")
+    .Input("shape_and_slices: string")
+    .Input("tensors: dtypes")
+    .Attr("dtypes: list(type)")
+    .SetIsStateful()
+    .SetShapeFn([](InferenceContext* c) {
+      ShapeHandle unused;
+      ShapeHandle s;
+      DimensionHandle unused_dim;
+
+      // Validate prefix.
+      TF_RETURN_IF_ERROR(c->WithRank(c->input(0), 0, &unused));
+
+      // Validate tensor_names and shapes_and_slices.
+      for (int i = 1; i <= 2; ++i) {
+        TF_RETURN_IF_ERROR(c->WithRank(c->input(i), 1, &s));
+        TF_RETURN_IF_ERROR(
+            c->WithValue(c->Dim(s, 0), c->num_inputs() - 3, &unused_dim));
+      }
+      // TODO(mrry): Attempt to parse the shapes_and_slices values and use
+      // them to constrain the shape of the remaining inputs.
+      return Status::OK();
+    });
+
+REGISTER_OP("RestoreDIT")
+    .Input("prefix: string")
+    .Input("tensor_names: string")
+    .Input("shape_and_slices: string")
+    .Output("tensors: dtypes")
+    .Attr("dtypes: list(type)")
+    .SetIsStateful()
+    .SetShapeFn([](InferenceContext* c) {
+      ShapeHandle shape0, shape1, shape2;
+      TF_RETURN_IF_ERROR(c->WithRank(c->input(0), 0, &shape0));
+      TF_RETURN_IF_ERROR(c->WithRank(c->input(1), 1, &shape1));
+      TF_RETURN_IF_ERROR(c->WithRank(c->input(2), 1, &shape2));
+      TF_RETURN_IF_ERROR(c->Merge(shape1, shape2, &shape0));
+
+      // Attempt to infer output shapes from its shape_and_slice input.
+      const Tensor* shape_and_slices_tensor = c->input_tensor(2);
+      if (shape_and_slices_tensor) {
+        const auto& shape_and_slices_flat =
+            shape_and_slices_tensor->flat<tstring>();
+        if (shape_and_slices_flat.size() != c->num_outputs()) {
+          return errors::InvalidArgument(
+              "The number of shape_and_slice doesn't match tensor outputs.");
+        }
+        for (int i = 0; i < shape_and_slices_flat.size(); ++i) {
+          const string& shape_and_slice = shape_and_slices_flat(i);
+          if (shape_and_slice.empty()) {
+            c->set_output(i, c->UnknownShape());
+            continue;
+          }
+          TensorShape parsed_full_shape;
+          TensorSlice parsed_slice;
+          TensorShape parsed_slice_shape;
+          TF_RETURN_IF_ERROR(checkpoint::ParseShapeAndSlice(
+              shape_and_slice, &parsed_full_shape, &parsed_slice,
+              &parsed_slice_shape));
+          ShapeHandle shape_handle;
+          TF_RETURN_IF_ERROR(
+              c->MakeShapeFromTensorShape(parsed_slice_shape, &shape_handle));
+          c->set_output(i, shape_handle);
+        }
+        return Status::OK();
+      } else {
+        return UnknownShape(c);
+      }
+    });
+
+REGISTER_OP("MergeDITCheckpoints")
+    .Input("checkpoint_prefixes: string")
+    .Input("destination_prefix: string")
+    .Attr("delete_old_dirs: bool = true")
+    .SetIsStateful()
+    .SetShapeFn([](InferenceContext* c) {
+      ShapeHandle unused;
+      TF_RETURN_IF_ERROR(c->WithRank(c->input(0), 1, &unused));
+      TF_RETURN_IF_ERROR(c->WithRank(c->input(1), 0, &unused));
+      return Status::OK();
+    });
+
 REGISTER_OP("SaveV2")
     .Input("prefix: string")
     .Input("tensor_names: string")

@@ -179,6 +179,7 @@ class AutoMixedPrecisionLists {
         "L2Loss",
         "Mean",
         "Pow",
+		"SaveDIT",
         "SaveV2",
         "SoftmaxCrossEntropyWithLogits",
         "SparseSoftmaxCrossEntropyWithLogits",
