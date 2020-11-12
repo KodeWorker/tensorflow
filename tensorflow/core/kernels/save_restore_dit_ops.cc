@@ -137,7 +137,7 @@ class SaveDIT : public OpKernel {
     OP_REQUIRES_OK(context, writer.Finish());
   }
 };
-REGISTER_KERNEL_BUILDER(Name("SaveV2").Device(DEVICE_CPU), SaveV2);
+REGISTER_KERNEL_BUILDER(Name("SaveDIT").Device(DEVICE_CPU), SaveV2);
 
 // Restores a list of named tensors from a tensor bundle (V2 checkpoint format).
 class RestoreDIT : public OpKernel {
@@ -188,7 +188,7 @@ class RestoreDIT : public OpKernel {
   // Expected dtypes of the to-restore tensors.
   std::vector<DataType> dtypes_;
 };
-REGISTER_KERNEL_BUILDER(Name("RestoreV2").Device(DEVICE_CPU), RestoreV2);
+REGISTER_KERNEL_BUILDER(Name("RestoreDIT").Device(DEVICE_CPU), RestoreV2);
 
 // The final step in saving sharded V2 checkpoints: merges metadata files.
 class MergeDITCheckpoints : public OpKernel {
@@ -236,7 +236,7 @@ class MergeDITCheckpoints : public OpKernel {
   // On merge, whether or not to delete the input (temporary) directories.
   bool delete_old_dirs_;
 };
-REGISTER_KERNEL_BUILDER(Name("MergeV2Checkpoints").Device(DEVICE_CPU),
+REGISTER_KERNEL_BUILDER(Name("MergeDITCheckpoints").Device(DEVICE_CPU),
                         MergeV2Checkpoints);
 
 }  // namespace tensorflow
