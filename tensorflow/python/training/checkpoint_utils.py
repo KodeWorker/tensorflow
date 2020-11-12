@@ -21,6 +21,7 @@ from __future__ import print_function
 import time
 import six
 
+from tensorflow.core.protobuf import saver_pb2
 from tensorflow.python.distribute import distribution_strategy_context
 from tensorflow.python.framework import ops
 from tensorflow.python.ops import io_ops
@@ -389,7 +390,8 @@ def _set_checkpoint_initializer(variable,
                                 ckpt_file,
                                 tensor_name,
                                 slice_spec,
-                                name="checkpoint_initializer"):
+                                name="checkpoint_initializer",
+                                write_version=saver_pb2.SaverDef.V2):
   """Overrides given variable's initialization op.
 
   Sets variable initializer to assign op that initializes variable from tensor's
@@ -408,8 +410,15 @@ def _set_checkpoint_initializer(variable,
   # to be on CPU as well. It is okay to place the variable's initializer op on
   # CPU since it will only be run once at the start.
   with ops.device(variable.device), ops.device("/cpu:0"):
-    restore_op = io_ops.restore_v2(
-        ckpt_file, [tensor_name], [slice_spec], [base_type], name=name)[0]
+    
+    #restore_op = io_ops.restore_v2(
+    #    ckpt_file, [tensor_name], [slice_spec], [base_type], name=name)[0]
+    if self._write_version == saver_pb2.SaverDef.V1 or self._write_version == saver_pb2.SaverDef.V2:
+      restore_op = io_ops.restore_v2(ckpt_file, [tensor_name], [slice_spec], [base_type], name=name)[0]
+    elif self._write_version == saver_pb2.SaverDef.DIT:
+      restore_op = io_ops.restore_dit(ckpt_file, [tensor_name], [slice_spec], [base_type], name=name)[0]
+    else:
+      raise RuntimeError("Unexpected write_version: " + self._write_version)
 
     names_to_saveables = saveable_object_util.op_list_to_dict([variable])
     saveable_objects = []

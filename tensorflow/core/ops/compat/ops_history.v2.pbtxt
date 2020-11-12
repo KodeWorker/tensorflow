@@ -39056,6 +39056,43 @@ op {
   is_stateful: true
 }
 op {
+  name: "MergeDITCheckpoints"
+  input_arg {
+    name: "checkpoint_prefixes"
+    type: DT_STRING
+  }
+  input_arg {
+    name: "destination_prefix"
+    type: DT_STRING
+  }
+  attr {
+    name: "delete_old_dirs"
+    type: "bool"
+    default_value {
+      b: true
+    }
+  }
+}
+op {
+  name: "MergeDITCheckpoints"
+  input_arg {
+    name: "checkpoint_prefixes"
+    type: DT_STRING
+  }
+  input_arg {
+    name: "destination_prefix"
+    type: DT_STRING
+  }
+  attr {
+    name: "delete_old_dirs"
+    type: "bool"
+    default_value {
+      b: true
+    }
+  }
+  is_stateful: true
+}
+op {
   name: "Mfcc"
   input_arg {
     name: "spectrogram"
@@ -62335,6 +62372,57 @@ op {
   is_stateful: true
 }
 op {
+  name: "RestoreDIT"
+  input_arg {
+    name: "prefix"
+    type: DT_STRING
+  }
+  input_arg {
+    name: "tensor_names"
+    type: DT_STRING
+  }
+  input_arg {
+    name: "shape_and_slices"
+    type: DT_STRING
+  }
+  output_arg {
+    name: "tensors"
+    type_list_attr: "dtypes"
+  }
+  attr {
+    name: "dtypes"
+    type: "list(type)"
+    has_minimum: true
+    minimum: 1
+  }
+}
+op {
+  name: "RestoreDIT"
+  input_arg {
+    name: "prefix"
+    type: DT_STRING
+  }
+  input_arg {
+    name: "tensor_names"
+    type: DT_STRING
+  }
+  input_arg {
+    name: "shape_and_slices"
+    type: DT_STRING
+  }
+  output_arg {
+    name: "tensors"
+    type_list_attr: "dtypes"
+  }
+  attr {
+    name: "dtypes"
+    type: "list(type)"
+    has_minimum: true
+    minimum: 1
+  }
+  is_stateful: true
+}
+op {
   name: "RetrieveTPUEmbeddingADAMParameters"
   output_arg {
     name: "parameters"
@@ -64158,6 +64246,57 @@ op {
 }
 op {
   name: "SaveV2"
+  input_arg {
+    name: "prefix"
+    type: DT_STRING
+  }
+  input_arg {
+    name: "tensor_names"
+    type: DT_STRING
+  }
+  input_arg {
+    name: "shape_and_slices"
+    type: DT_STRING
+  }
+  input_arg {
+    name: "tensors"
+    type_list_attr: "dtypes"
+  }
+  attr {
+    name: "dtypes"
+    type: "list(type)"
+    has_minimum: true
+    minimum: 1
+  }
+  is_stateful: true
+}
+op {
+  name: "SaveDIT"
+  input_arg {
+    name: "prefix"
+    type: DT_STRING
+  }
+  input_arg {
+    name: "tensor_names"
+    type: DT_STRING
+  }
+  input_arg {
+    name: "shape_and_slices"
+    type: DT_STRING
+  }
+  input_arg {
+    name: "tensors"
+    type_list_attr: "dtypes"
+  }
+  attr {
+    name: "dtypes"
+    type: "list(type)"
+    has_minimum: true
+    minimum: 1
+  }
+}
+op {
+  name: "SaveDIT"
   input_arg {
     name: "prefix"
     type: DT_STRING

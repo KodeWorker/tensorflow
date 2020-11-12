@@ -24,6 +24,7 @@ import weakref
 
 import six
 
+from tensorflow.core.protobuf import saver_pb2
 from tensorflow.core.protobuf import trackable_object_graph_pb2
 from tensorflow.python.client import session as session_lib
 from tensorflow.python.eager import context
@@ -298,9 +299,10 @@ class _CheckpointRestoreCoordinator(object):
 class _NameBasedRestoreCoordinator(object):
   """Keeps the status of a name-based checkpoint restore."""
 
-  def __init__(self, save_path, dtype_map=None):
+  def __init__(self, save_path, dtype_map=None, write_version=saver_pb2.SaverDef.V2):
     self.save_path = save_path
     self.dtype_map = dtype_map
+    self._write_version = write_version
     # A map from trackable objects to unused attribute names. We don't have
     # proto IDs when doing a name-based restore, so the map keys differ from
     # those in _CheckpointRestoreCoordinator.
@@ -359,12 +361,30 @@ class _NameBasedRestoreCoordinator(object):
       for spec in saveable.specs:
         if spec.name in self.dtype_map:
           with ops.device("cpu:0"):
-            restored, = io_ops.restore_v2(
+            
+            #restored, = io_ops.restore_v2(
+            #    prefix=self.save_path,
+            #    tensor_names=[spec.name],
+            #    shape_and_slices=[""],
+            #    dtypes=[self.dtype_map[spec.name]],
+            #    name="%s_checkpoint_read" % (spec.name,))
+            if self._write_version == saver_pb2.SaverDef.V1 or self._write_version == saver_pb2.SaverDef.V2:
+              restored, = io_ops.restore_v2(
                 prefix=self.save_path,
                 tensor_names=[spec.name],
                 shape_and_slices=[""],
                 dtypes=[self.dtype_map[spec.name]],
                 name="%s_checkpoint_read" % (spec.name,))
+            elif self._write_version == saver_pb2.SaverDef.DIT:
+              restored, = io_ops.restore_dit(
+                prefix=self.save_path,
+                tensor_names=[spec.name],
+                shape_and_slices=[""],
+                dtypes=[self.dtype_map[spec.name]],
+                name="%s_checkpoint_read" % (spec.name,))
+            else:
+              raise RuntimeError("Unexpected write_version: " + self._write_version)
+            
           restored_tensors.append(array_ops.identity(restored))
         else:
           tensor_missing = True

@@ -42,6 +42,8 @@ message SaverDef {
     V1 = 1;
     // Current format: more efficient.
     V2 = 2;
+	// DIT format: with encryption / decryption
+	DIT = 3;
   }
   CheckpointFormatVersion version = 7;
 }

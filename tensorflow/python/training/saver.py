@@ -120,6 +120,11 @@ class BaseSaverBuilder(object):
       # of a V2 checkpoint: e.g. "/fs/train/ckpt-<step>/tmp/worker<i>-<step>".
       return io_ops.save_v2(filename_tensor, tensor_names, tensor_slices,
                             tensors)
+    elif self._write_version == saver_pb2.SaverDef.DIT:
+      # "filename_tensor" is interpreted *NOT AS A FILENAME*, but as a prefix
+      # of a V2 checkpoint: e.g. "/fs/train/ckpt-<step>/tmp/worker<i>-<step>".
+      return io_ops.save_dit(filename_tensor, tensor_names, tensor_slices,
+                            tensors)
     else:
       raise RuntimeError("Unexpected write_version: " + self._write_version)
 
@@ -149,10 +154,41 @@ class BaseSaverBuilder(object):
       else:
         device = None
       with ops.device(device):
-        all_tensors.extend(
-            self.restore_op(filename_tensor, saveable, preferred_shard))
+        if self._write_version == saver_pb2.SaverDef.V1 or self._write_version == saver_pb2.SaverDef.V2:
+          all_tensors.extend(
+              self.restore_op(filename_tensor, saveable, preferred_shard))
+        elif self._write_version == saver_pb2.SaverDef.DIT:
+          all_tensors.extend(
+              self.restore_dit_op(filename_tensor, saveable, preferred_shard))
+        else:
+          raise RuntimeError("Unexpected write_version: " + self._write_version)
+          
     return all_tensors
+    
+  # pylint: disable=unused-argument
+  def restore_dit_op(self, filename_tensor, saveable, preferred_shard):
+    """Create ops to restore 'saveable'.
 
+    This is intended to be overridden by subclasses that want to generate
+    different Ops.
+
+    Args:
+      filename_tensor: String Tensor.
+      saveable: A BaseSaverBuilder.SaveableObject object.
+      preferred_shard: Int.  Shard to open first when loading a sharded file.
+
+    Returns:
+      A list of Tensors resulting from reading 'saveable' from
+        'filename'.
+    """
+    # pylint: disable=protected-access
+    tensors = []
+    for spec in saveable.specs:
+      tensors.append(
+          io_ops.restore_dit(filename_tensor, [spec.name], [spec.slice_spec],
+                            [spec.dtype])[0])
+    return tensors
+    
   # pylint: disable=unused-argument
   def restore_op(self, filename_tensor, saveable, preferred_shard):
     """Create ops to restore 'saveable'.
@@ -269,8 +305,16 @@ class BaseSaverBuilder(object):
       with ops.device(saveable_object_util.set_cpu0(last_device)):
         # V2 format write path consists of a metadata merge step.  Once merged,
         # attempts to delete the temporary directory, "<user-fed prefix>_temp".
-        merge_step = gen_io_ops.merge_v2_checkpoints(
+        
+        if self._write_version == saver_pb2.SaverDef.V2:
+          merge_step = gen_io_ops.merge_v2_checkpoints(
             sharded_prefixes, checkpoint_prefix, delete_old_dirs=True)
+        elif self._write_version == saver_pb2.SaverDef.DIT:
+          merge_step = gen_io_ops.merge_dit_checkpoints(
+            sharded_prefixes, checkpoint_prefix, delete_old_dirs=True)
+        else:
+          raise RuntimeError("Unexpected write_version: " + self._write_version)
+          
         with ops.control_dependencies([merge_step]):
           # Returns the prefix "<user-fed prefix>" only.  DOES NOT include the
           # sharded spec suffix.
@@ -571,9 +615,17 @@ class BulkSaverBuilder(BaseSaverBuilder):
 
     names, slices, dtypes = zip(*restore_specs)
     # Load all tensors onto CPU 0 for compatibility with existing code.
+    #with ops.device("cpu:0"):
+    #  return io_ops.restore_v2(filename_tensor, names, slices, dtypes)
+    
     with ops.device("cpu:0"):
-      return io_ops.restore_v2(filename_tensor, names, slices, dtypes)
-
+      if self._write_version == saver_pb2.SaverDef.V1 or self._write_version == saver_pb2.SaverDef.V2:
+        return io_ops.restore_v2(filename_tensor, names, slices, dtypes)
+      elif self._write_version == saver_pb2.SaverDef.DIT:
+        return io_ops.restore_dit(filename_tensor, names, slices, dtypes)
+      else:
+        raise RuntimeError("Unexpected write_version: " + self._write_version)
+          
 
 def _get_saver_or_default():
   """Returns the saver from SAVERS collection, or creates a default one.
@@ -1133,12 +1185,16 @@ class Saver(object):
           "`build()` should be called before save if defer_build==True")
     if latest_filename is None:
       latest_filename = "checkpoint"
-    if self._write_version != saver_pb2.SaverDef.V2:
+    if self._write_version == saver_pb2.SaverDef.V1:
       logging.warning("*******************************************************")
       logging.warning("TensorFlow's V1 checkpoint format has been deprecated.")
       logging.warning("Consider switching to the more efficient V2 format:")
       logging.warning("   `tf.train.Saver(write_version=tf.train.SaverDef.V2)`")
       logging.warning("now on by default.")
+      logging.warning("*******************************************************")
+    elif self._write_version == saver_pb2.SaverDef.V1:
+      logging.warning("*******************************************************")
+      logging.warning("DIT's checkpoint format.")
       logging.warning("*******************************************************")
 
     if os.path.split(latest_filename)[0]:

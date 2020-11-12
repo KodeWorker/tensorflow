@@ -38,12 +38,13 @@ from tensorflow.python.util import nest
 class _SingleDeviceSaver(object):
   """Saves and restores checkpoints from the current device."""
 
-  def __init__(self, saveable_objects):
+  def __init__(self, saveable_objects, write_version=saver_pb2.SaverDef.V2):
     """Specify a list of `SaveableObject`s to save and restore.
 
     Args:
       saveable_objects: A list of `SaveableObject`s.
     """
+    self._write_version = write_version
     saveable_objects = list(saveable_objects)
     for saveable in saveable_objects:
       if not isinstance(saveable, saveable_object.SaveableObject):
@@ -69,8 +70,14 @@ class _SingleDeviceSaver(object):
         tensors.append(spec.tensor)
         tensor_slices.append(spec.slice_spec)
     with ops.device("cpu:0"):
-      return io_ops.save_v2(file_prefix, tensor_names, tensor_slices, tensors)
-
+    
+      if self._write_version == saver_pb2.SaverDef.V2:
+        return io_ops.save_v2(file_prefix, tensor_names, tensor_slices, tensors)
+      elif self._write_version == saver_pb2.SaverDef.DIT:
+        return io_ops.save_dit(file_prefix, tensor_names, tensor_slices, tensors)
+      else:
+        raise RuntimeError("Unexpected write_version: " + self._write_version)
+        
   def restore(self, file_prefix):
     """Restore the saveable objects from a checkpoint with `file_prefix`.
 
@@ -91,8 +98,16 @@ class _SingleDeviceSaver(object):
         restore_specs.append((spec.name, spec.slice_spec, spec.dtype))
     tensor_names, tensor_slices, tensor_dtypes = zip(*restore_specs)
     with ops.device("cpu:0"):
-      restored_tensors = io_ops.restore_v2(
+    
+      if self._write_version == saver_pb2.SaverDef.V2:
+        restored_tensors = io_ops.restore_v2(
           file_prefix, tensor_names, tensor_slices, tensor_dtypes)
+      elif self._write_version == saver_pb2.SaverDef.DIT:
+        restored_tensors = io_ops.restore_dit(
+          file_prefix, tensor_names, tensor_slices, tensor_dtypes)
+      else:
+        raise RuntimeError("Unexpected write_version: " + self._write_version)
+        
     structured_restored_tensors = nest.pack_sequence_as(
         tensor_structure, restored_tensors)
     restore_ops = {}
@@ -125,7 +140,7 @@ class MultiDeviceSaver(object):
   checkpointing are built on top of it.
   """
 
-  def __init__(self, saveable_objects):
+  def __init__(self, saveable_objects, write_version=saver_pb2.SaverDef.V2):
     """Specify a list of `SaveableObject`s to save and restore.
 
     Args:
@@ -140,7 +155,7 @@ class MultiDeviceSaver(object):
             .format(saveable))
       saveables_by_device.setdefault(saveable.device, []).append(saveable)
     self._single_device_savers = {
-        device: _SingleDeviceSaver(saveables)
+        device: _SingleDeviceSaver(saveables, write_version=write_version)
         for device, saveables in saveables_by_device.items()}
 
   def to_proto(self):
@@ -149,12 +164,17 @@ class MultiDeviceSaver(object):
         shape=[], dtype=dtypes.string, name="saver_filename")
     save_tensor = self._traced_save(filename_tensor)
     restore_op = self._traced_restore(filename_tensor).op
+    #return saver_pb2.SaverDef(
+    #    filename_tensor_name=filename_tensor.name,
+    #    save_tensor_name=save_tensor.name,
+    #    restore_op_name=restore_op.name,
+    #    version=saver_pb2.SaverDef.V2)
     return saver_pb2.SaverDef(
         filename_tensor_name=filename_tensor.name,
         save_tensor_name=save_tensor.name,
         restore_op_name=restore_op.name,
-        version=saver_pb2.SaverDef.V2)
-
+        version=self._write_version)
+        
   @def_function.function(
       input_signature=(tensor_spec.TensorSpec(shape=(), dtype=dtypes.string),),
       autograph=False)
@@ -234,9 +254,15 @@ class MultiDeviceSaver(object):
       with ops.device(saveable_object_util.set_cpu0(last_device)):
         # V2 format write path consists of a metadata merge step.  Once merged,
         # attempts to delete the temporary directory, "<user-fed prefix>_temp".
-        return gen_io_ops.merge_v2_checkpoints(
+        if self._write_version == saver_pb2.SaverDef.V2:
+          return gen_io_ops.merge_v2_checkpoints(
             sharded_prefixes, file_prefix, delete_old_dirs=True)
-
+        elif self._write_version == saver_pb2.SaverDef.DIT:
+          return gen_io_ops.merge_dit_checkpoints(
+            sharded_prefixes, file_prefix, delete_old_dirs=True)
+        else:
+          raise RuntimeError("Unexpected write_version: " + self._write_version)
+          
   def restore(self, file_prefix):
     """Restore the saveable objects from a checkpoint with `file_prefix`.
 

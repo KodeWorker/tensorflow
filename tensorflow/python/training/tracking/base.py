@@ -22,6 +22,7 @@ import collections
 
 import six
 
+from tensorflow.core.protobuf import saver_pb2
 from tensorflow.python.eager import context
 from tensorflow.python.framework import constant_op
 from tensorflow.python.framework import dtypes
@@ -190,7 +191,7 @@ class PythonStringStateSaveable(PythonStateSaveable):
 class CheckpointPosition(object):
   """Indicates a position within a `_CheckpointRestoreCoordinator`."""
 
-  def __init__(self, checkpoint, proto_id):
+  def __init__(self, checkpoint, proto_id, write_version=saver_pb2.SaverDef.V2):
     """Specify an object within a checkpoint.
 
     Args:
@@ -199,7 +200,8 @@ class CheckpointPosition(object):
     """
     self._checkpoint = checkpoint
     self._proto_id = proto_id
-
+    self._write_version = write_version
+    
   def restore(self, trackable):
     """Restore this value into `trackable`."""
     with ops.init_scope():
@@ -296,12 +298,31 @@ class CheckpointPosition(object):
       with ops.init_scope():
         with ops.device("/cpu:0"):
           # Run the restore itself on the CPU.
-          value, = io_ops.restore_v2(
+          #value, = io_ops.restore_v2(
+          #    prefix=self._checkpoint.save_path_tensor,
+          #    tensor_names=[checkpoint_key],
+          #    shape_and_slices=[""],
+          #    dtypes=[base_type],
+          #    name="%s_checkpoint_read" % (serialized_tensor.name,))
+          
+          if self._write_version == saver_pb2.SaverDef.V1 or self._write_version == saver_pb2.SaverDef.V2:
+            value, = io_ops.restore_v2(
               prefix=self._checkpoint.save_path_tensor,
               tensor_names=[checkpoint_key],
               shape_and_slices=[""],
               dtypes=[base_type],
               name="%s_checkpoint_read" % (serialized_tensor.name,))
+          elif self._write_version == saver_pb2.SaverDef.DIT:
+            value, = io_ops.restore_dit(
+              prefix=self._checkpoint.save_path_tensor,
+              tensor_names=[checkpoint_key],
+              shape_and_slices=[""],
+              dtypes=[base_type],
+              name="%s_checkpoint_read" % (serialized_tensor.name,))
+          else:
+            raise RuntimeError("Unexpected write_version: " + self._write_version)
+          
+          
         # Copy the value to the current device if necessary.
         value_tensors[serialized_tensor.name] = array_ops.identity(value)
       return value_tensors
