@@ -39,6 +39,15 @@ limitations under the License.
 
 namespace tensorflow {
 
+namespace {
+
+// Tensors larger than this threshold will be restored from a thread-pool.
+const int64 kLargeShapeThreshold = 16 << 20;  // 16M
+
+// A restore operation for a single tensor.  Small tensors may be restored
+// directly from the op thread to improve read locality.  Large tensors can be
+// restored from a thread pool: this requires creating a separate BundleReader
+// for each restore.
 struct RestoreDITOp {
   RestoreDITOp& operator=(const RestoreDITOp&) = delete;
 
@@ -114,9 +123,9 @@ struct RestoreDITOp {
 }  // namespace
 
 Status RestoreTensorsDIT(OpKernelContext* context, const Tensor& prefix,
-                         const Tensor& tensor_names,
-                         const Tensor& shape_and_slices,
-                         gtl::ArraySlice<DataType> dtypes) {
+                        const Tensor& tensor_names,
+                        const Tensor& shape_and_slices,
+                        gtl::ArraySlice<DataType> dtypes) {
   const string& prefix_string = prefix.scalar<tstring>()();
 
   const auto& tensor_names_flat = tensor_names.flat<tstring>();
@@ -130,8 +139,8 @@ Status RestoreTensorsDIT(OpKernelContext* context, const Tensor& prefix,
               return tensor_names_flat(a) < tensor_names_flat(b);
             });
 
-  std::vector<std::unique_ptr<RestoreOp> > pool_restore_ops;
-  std::vector<std::unique_ptr<RestoreOp> > direct_restore_ops;
+  std::vector<std::unique_ptr<RestoreDITOp> > pool_restore_ops;
+  std::vector<std::unique_ptr<RestoreDITOp> > direct_restore_ops;
 
   BundleReaderDIT default_reader(Env::Default(), prefix_string);
   TF_RETURN_IF_ERROR(default_reader.status());
@@ -160,7 +169,7 @@ Status RestoreTensorsDIT(OpKernelContext* context, const Tensor& prefix,
     const string& tensor_name = tensor_names_flat(i);
     const string& shape_and_slice = shape_and_slices_flat(i);
     auto op =
-        new RestoreOp{context, i, tensor_name, shape_and_slice, prefix_string};
+        new RestoreDITOp{context, i, tensor_name, shape_and_slice, prefix_string};
     if (op->should_run_in_pool(&default_reader)) {
       pool_restore_ops.emplace_back(op);
     } else {
