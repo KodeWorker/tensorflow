@@ -39,32 +39,12 @@ cc_library(
     srcs = [
         "byte_swap.cc",
         "tensor_bundle.cc",
-    ],
-    hdrs = [
-        "byte_swap.h",
-        "tensor_bundle.h",
-    ],
-    copts = tf_copts() + if_not_windows(["-Wno-sign-compare"]),
-    deps = [
-        ":naming",
-        "//tensorflow/core:core_cpu_lib",
-        "//tensorflow/core:framework",
-        "//tensorflow/core:framework_internal",
-        "//tensorflow/core:lib",
-        "//tensorflow/core:lib_internal",
-        "//tensorflow/core:protos_all_cc",
-    ],
-)
-
-cc_library(
-    name = "tensor_bundle_dit",
-    srcs = [
-        "byte_swap.cc",
 		"tensor_bundle_dit.cc",
     ],
     hdrs = [
         "byte_swap.h",
-		"tensor_bundle_dit.h",
+        "tensor_bundle.h",
+		"tensor_bundle_dit.cc",
     ],
     copts = tf_copts() + if_not_windows(["-Wno-sign-compare"]),
     deps = [
@@ -81,8 +61,7 @@ cc_library(
 cc_header_only_library(
     name = "tensor_bundle_headers_lib",
     features = ["-parse_headers"],  # Transitively pulls in Eigen headers
-    deps = [":tensor_bundle",
-			":tensor_bundle_dit"],
+    deps = [":tensor_bundle"],
 )
 
 cc_library(

@@ -660,21 +660,10 @@ tf_kernel_library(
 
 cc_library(
     name = "save_restore_tensor",
-    srcs = ["save_restore_tensor.cc"],
-    hdrs = ["save_restore_tensor.h"],
-    copts = if_not_windows(["-Wno-sign-compare"]),
-    deps = [
-        ":bounds_check",
-        "//tensorflow/core:framework",
-        "//tensorflow/core:lib",
-        "//tensorflow/core/util/tensor_bundle",
-    ],
-)
-
-cc_library(
-    name = "save_restore_tensor_dit",
-    srcs = ["save_restore_tensor_dit.cc"],
-    hdrs = ["save_restore_tensor_dit.h"],
+    srcs = ["save_restore_tensor.cc",
+			"save_restore_tensor_dit.cc"],
+    hdrs = ["save_restore_tensor.h",
+			"save_restore_tensor_dit.h"],
     copts = if_not_windows(["-Wno-sign-compare"]),
     deps = [
         ":bounds_check",
