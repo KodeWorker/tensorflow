@@ -68,11 +68,6 @@ Status RestoreTensorsV2(OpKernelContext* context, const Tensor& prefix,
                         const Tensor& shape_and_slices,
                         gtl::ArraySlice<DataType> dtypes);
 
-Status RestoreTensorsDIT(OpKernelContext* context, const Tensor& prefix,
-                         const Tensor& tensor_names,
-                         const Tensor& shape_and_slices,
-                         gtl::ArraySlice<DataType> dtypes);
-
 }  // namespace tensorflow
 
 #endif  // TENSORFLOW_CORE_KERNELS_SAVE_RESTORE_TENSOR_H_

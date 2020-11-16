@@ -31,7 +31,7 @@ limitations under the License.
 #include "tensorflow/core/util/saved_tensor_slice_util.h"
 #include "tensorflow/core/util/tensor_slice_reader.h"
 
-#include "tensorflow/core/kernels/save_restore_tensor.h"
+#include "tensorflow/core/kernels/save_restore_tensor_dit.h"
 #include "tensorflow/core/util/tensor_bundle/tensor_bundle_dit.h"
 
 namespace tensorflow {

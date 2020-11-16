@@ -671,6 +671,19 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "save_restore_tensor_dit",
+    srcs = ["save_restore_tensor_dit.cc"],
+    hdrs = ["save_restore_tensor_dit.h"],
+    copts = if_not_windows(["-Wno-sign-compare"]),
+    deps = [
+        ":bounds_check",
+        "//tensorflow/core:framework",
+        "//tensorflow/core:lib",
+        "//tensorflow/core/util/tensor_bundle",
+    ],
+)
+
 tf_kernel_library(
     name = "split_lib",
     srcs = ["split_lib_cpu.cc"],
@@ -3341,6 +3354,7 @@ tf_kernel_library(
 SAVE_RESTORE_DEPS = [
     ":bounds_check_lib",
     ":save_restore_tensor",
+	":save_restore_tensor_dit",
     "//tensorflow/core:framework",
     "//tensorflow/core:lib",
     "//tensorflow/core:lib_internal",
@@ -6360,6 +6374,7 @@ filegroup(
         "resize_nearest_neighbor_op.h",
         "reverse_op.h",
         "save_restore_tensor.h",
+		"save_restore_tensor_dit.h",
         "scatter_nd_op.h",
         "scatter_nd_op_cpu_impl.h",
         "segment_reduction_ops.h",
@@ -6559,6 +6574,7 @@ filegroup(
         "reverse_op.cc",
         "save_op.cc",
         "save_restore_tensor.cc",
+		"save_restore_tensor_dit.cc",
         "save_restore_v2_ops.cc",
 		"save_restore_dit_ops.cc",
         "scatter_nd_op.cc",
