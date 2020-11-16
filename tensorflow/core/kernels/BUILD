@@ -3343,7 +3343,6 @@ tf_kernel_library(
 SAVE_RESTORE_DEPS = [
     ":bounds_check_lib",
     ":save_restore_tensor",
-	":save_restore_tensor_dit",
     "//tensorflow/core:framework",
     "//tensorflow/core:lib",
     "//tensorflow/core:lib_internal",
