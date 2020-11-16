@@ -220,7 +220,7 @@ Status ParseEntryProto(StringPiece key, StringPiece value,
 // original content of "bytes_written", and on OK updates it with number of
 // bytes written.
 // REQUIRES: val.dtype() != DT_STRING
-Status WriteTensor(const Tensor& val, FileOutputBuffer* out,
+Status WriteTensor(const Tensor& val, FileOutputBufferDIT* out,
                    size_t* bytes_written) {
   DCHECK_NE(val.dtype(), DT_STRING);
   DCHECK_NE(val.dtype(), DT_VARIANT);
@@ -235,7 +235,7 @@ Status WriteTensor(const Tensor& val, FileOutputBuffer* out,
 //
 // Checksums all bytes written and stores it into "crc32c".
 // REQUIRES: val.dtype() == DT_STRING
-Status WriteStringTensor(const Tensor& val, FileOutputBuffer* out,
+Status WriteStringTensor(const Tensor& val, FileOutputBufferDIT* out,
                          size_t* bytes_written, uint32* crc32c) {
   // On-disk format:
   //   [varint64 len0]..[varint64 lenL][4 byte cksum on lengths][string bytes]
@@ -287,7 +287,7 @@ Status WriteStringTensor(const Tensor& val, FileOutputBuffer* out,
   return Status::OK();
 }
 
-Status WriteVariantTensor(const Tensor& val, FileOutputBuffer* out,
+Status WriteVariantTensor(const Tensor& val, FileOutputBufferDIT* out,
                           size_t* bytes_written, uint32* crc32c) {
   // On-disk format:
   //   [varint64 len1][bytes variant1][4 byte checksum]
@@ -381,7 +381,7 @@ table::Options TableBuilderOptions() {
 // Writes zeros to output buffer to align the next write to the requested
 // alignment. "size" is the current size of the buffer and is updated to the
 // new size.
-Status PadAlignment(FileOutputBuffer* out, int alignment, int64* size) {
+Status PadAlignment(FileOutputBufferDIT* out, int alignment, int64* size) {
   int bytes_over = *size % alignment;
   if (bytes_over == 0) {
     return Status::OK();
@@ -414,8 +414,8 @@ BundleWriterDIT::BundleWriterDIT(Env* env, StringPiece prefix, const Options& op
   std::unique_ptr<WritableFile> wrapper;
   status_ = env_->NewWritableFile(tmp_data_path_, &wrapper);
   if (!status_.ok()) return;
-  out_ = std::unique_ptr<FileOutputBuffer>(
-      new FileOutputBuffer(wrapper.release(), 8 << 20 /* 8MB write buffer */));
+  out_ = std::unique_ptr<FileOutputBufferDIT>(
+      new FileOutputBufferDIT(wrapper.release(), 8 << 20 /* 8MB write buffer */));
 
   VLOG(1) << "Writing to file " << tmp_data_path_;
 }
@@ -1106,9 +1106,9 @@ string BundleReaderDIT::DebugString() {
   return shape_str;
 }
 
-FileOutputBuffer::~FileOutputBuffer() { delete file_; }
+FileOutputBufferDIT::~FileOutputBufferDIT() { delete file_; }
 
-Status FileOutputBuffer::Append(StringPiece data) {
+Status FileOutputBufferDIT::Append(StringPiece data) {
   // In the below, it is critical to calculate the checksum on the actually
   // copied bytes, not the source bytes.  This is because "data" typically
   // points to tensor buffers, which may be concurrently written.
@@ -1138,12 +1138,12 @@ Status FileOutputBuffer::Append(StringPiece data) {
   return Status::OK();
 }
 
-Status FileOutputBuffer::Close() {
+Status FileOutputBufferDIT::Close() {
   TF_RETURN_IF_ERROR(FlushBuffer());
   return file_->Close();
 }
 
-Status FileOutputBuffer::FlushBuffer() {
+Status FileOutputBufferDIT::FlushBuffer() {
   if (position_ > 0) {
     TF_RETURN_IF_ERROR(file_->Append(StringPiece(&buffer_[0], position_)));
     position_ = 0;

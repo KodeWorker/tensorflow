@@ -681,7 +681,6 @@ cc_library(
         "//tensorflow/core:framework",
         "//tensorflow/core:lib",
         "//tensorflow/core/util/tensor_bundle",
-		"//tensorflow/core/util/tensor_bundle_dit",
     ],
 )
 
@@ -3318,7 +3317,6 @@ IO_DEPS = [
     "//tensorflow/core:protos_all_cc",
     "//tensorflow/core:reader_base",
     "//tensorflow/core/util/tensor_bundle",
-	"//tensorflow/core/util/tensor_bundle_dit",
 ]
 
 tf_kernel_library(
@@ -3362,7 +3360,6 @@ SAVE_RESTORE_DEPS = [
     "//tensorflow/core:lib_internal",
     "//tensorflow/core:protos_all_cc",
     "//tensorflow/core/util/tensor_bundle",
-	"//tensorflow/core/util/tensor_bundle_dit",
 ]
 
 tf_kernel_library(

@@ -83,7 +83,7 @@ limitations under the License.
 
 namespace tensorflow {
 
-class FileOutputBuffer;
+class FileOutputBufferDIT;
 
 // Versioning of the tensor bundle format.
 // Follows the same rules as 3p/tf/core/public/version.h.
@@ -151,7 +151,7 @@ class BundleWriterDIT {
   const string prefix_;
   const string tmp_metadata_path_;
   const string tmp_data_path_;
-  std::unique_ptr<FileOutputBuffer> out_;
+  std::unique_ptr<FileOutputBufferDIT> out_;
   int64 size_;  // Number of bytes written into out_.
   std::map<string, BundleEntryProto> entries_;
   Status status_;
@@ -312,14 +312,14 @@ class BundleReaderDIT {
 // A buffering wrapper for a WritableFile.  Useful if the caller wishes to issue
 // small writes to a file (e.g. writing out a list of small varints).
 // External synchronization must be used in the presence of concurrent callers.
-class FileOutputBuffer {
+class FileOutputBufferDIT {
  public:
-  FileOutputBuffer(WritableFile* file, size_t buffer_size)
+  FileOutputBufferDIT(WritableFile* file, size_t buffer_size)
       : file_(file), position_(0), buffer_size_(buffer_size) {
     DCHECK_GT(buffer_size, 0);
     buffer_.resize(buffer_size);
   }
-  ~FileOutputBuffer();
+  ~FileOutputBufferDIT();
 
   // Buffered append.
   Status Append(StringPiece data);
