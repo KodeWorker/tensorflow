@@ -23,15 +23,16 @@ limitations under the License.
 #include "tensorflow/core/framework/tensor.h"
 #include "tensorflow/core/framework/types.h"
 #include "tensorflow/core/framework/types.pb.h"
-#include "tensorflow/core/kernels/save_restore_tensor.h"
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow/core/lib/io/path.h"
 #include "tensorflow/core/platform/env.h"
 #include "tensorflow/core/platform/logging.h"
 #include "tensorflow/core/platform/types.h"
 #include "tensorflow/core/util/saved_tensor_slice_util.h"
-#include "tensorflow/core/util/tensor_bundle/tensor_bundle.h"
 #include "tensorflow/core/util/tensor_slice_reader.h"
+
+#include "tensorflow/core/kernels/save_restore_tensor.h"
+#include "tensorflow/core/util/tensor_bundle/tensor_bundle_dit.h"
 
 namespace tensorflow {
 
@@ -105,9 +106,9 @@ class SaveDIT : public OpKernel {
     const auto& tensor_names_flat = tensor_names.flat<tstring>();
     const auto& shape_and_slices_flat = shape_and_slices.flat<tstring>();
 
-    BundleWriter writer(Env::Default(), prefix_string);
+    BundleWriterDIT writer(Env::Default(), prefix_string);
     OP_REQUIRES_OK(context, writer.status());
-    VLOG(1) << "BundleWriter, prefix_string: " << prefix_string;
+    VLOG(1) << "BundleWriterDIT, prefix_string: " << prefix_string;
 
     for (int i = 0; i < num_tensors; ++i) {
       const string& tensor_name = tensor_names_flat(i);
@@ -180,7 +181,7 @@ class RestoreDIT : public OpKernel {
       return;
     }
     // If found, invokes the V2 reader.
-    OP_REQUIRES_OK(context, RestoreTensorsV2(context, prefix, tensor_names,
+    OP_REQUIRES_OK(context, RestoreTensorsDIT(context, prefix, tensor_names,
                                              shape_and_slices, dtypes_));
   }
 

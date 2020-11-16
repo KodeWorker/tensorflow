@@ -24,6 +24,8 @@ filegroup(
         "naming.h",
         "tensor_bundle.cc",
         "tensor_bundle.h",
+		"tensor_bundle_dit.cc",
+        "tensor_bundle_dit.h",
     ],
 )
 
@@ -37,10 +39,12 @@ cc_library(
     srcs = [
         "byte_swap.cc",
         "tensor_bundle.cc",
+		"tensor_bundle_dit.cc",
     ],
     hdrs = [
         "byte_swap.h",
         "tensor_bundle.h",
+		"tensor_bundle_dit.h",
     ],
     copts = tf_copts() + if_not_windows(["-Wno-sign-compare"]),
     deps = [
