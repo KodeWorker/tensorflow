@@ -113,7 +113,7 @@ class BundleWriterDIT {
     // Must be >= 1. The default size of 1 densely packs tensors.
     int data_alignment{1};
   };
-  BundleWriter(Env* env, StringPiece prefix,
+  BundleWriterDIT(Env* env, StringPiece prefix,
                const Options& options = Options());
 
   // Adds the tensor "val" under key "key".
@@ -156,7 +156,7 @@ class BundleWriterDIT {
   std::map<string, BundleEntryProto> entries_;
   Status status_;
 
-  TF_DISALLOW_COPY_AND_ASSIGN(BundleWriter);
+  TF_DISALLOW_COPY_AND_ASSIGN(BundleWriterDIT);
 };
 
 // Merges a set of bundles (given their prefixes) into a single bundle with the
@@ -181,8 +181,8 @@ Status MergeBundles(Env* env, gtl::ArraySlice<tstring> prefixes,
 // All threads accessing the same BundleReader must synchronize.
 class BundleReaderDIT {
  public:
-  BundleReader(Env* const env, StringPiece prefix);
-  ~BundleReader();
+  BundleReaderDIT(Env* const env, StringPiece prefix);
+  ~BundleReaderDIT();
 
   // Is ok() iff the reader construction is successful (completed the read of
   // the metadata).
@@ -306,7 +306,7 @@ class BundleReaderDIT {
 
   friend class TensorBundleAlignmentTest;  // For testing data alignment.
 
-  TF_DISALLOW_COPY_AND_ASSIGN(BundleReader);
+  TF_DISALLOW_COPY_AND_ASSIGN(BundleReaderDIT);
 };
 
 // A buffering wrapper for a WritableFile.  Useful if the caller wishes to issue
