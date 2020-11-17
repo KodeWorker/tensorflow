@@ -677,7 +677,7 @@ static Status MergeOneBundle(Env* env, StringPiece prefix,
 }
 
 
-Status MergeBundles(Env* env, gtl::ArraySlice<tstring> prefixes,
+Status MergeBundlesDIT(Env* env, gtl::ArraySlice<tstring> prefixes,
                     StringPiece merged_prefix) {
   // Merges all metadata tables.
   // TODO(zhifengc): KeyValue sorter if it becomes too big.
