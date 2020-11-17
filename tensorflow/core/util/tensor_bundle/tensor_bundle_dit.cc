@@ -555,7 +555,7 @@ Status BundleWriterDIT::Finish() {
 // Merging tensor bundles.
 
 // Accumulator of metadata states during a merge.
-/*
+
 struct MergeState {
   // Accumulated from the header entries.
   int num_shards = 0;
@@ -572,11 +572,11 @@ struct MergeState {
   // Data file path -> new shard id in the final merged bundle.
   std::unordered_map<string, int32> shard_ids;
 };
-*/
+
 
 // Merges entries of "prefix" into the accumulator state "merge".
 // Returns OK iff the merge succeeds.
-/*
+
 static Status MergeOneBundle(Env* env, StringPiece prefix,
                              MergeState* merge_state) {
   VLOG(1) << "Merging bundle:" << prefix;
@@ -675,8 +675,8 @@ static Status MergeOneBundle(Env* env, StringPiece prefix,
   }
   return Status::OK();
 }
-*/
-/*
+
+
 Status MergeBundles(Env* env, gtl::ArraySlice<tstring> prefixes,
                     StringPiece merged_prefix) {
   // Merges all metadata tables.
@@ -725,7 +725,7 @@ Status MergeBundles(Env* env, gtl::ArraySlice<tstring> prefixes,
   }
   return status;
 }
-*/
+
 // Interface for reading a tensor bundle.
 
 BundleReaderDIT::BundleReaderDIT(Env* env, StringPiece prefix)
