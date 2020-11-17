@@ -47,17 +47,17 @@ limitations under the License.
 namespace tensorflow {
 
 // Versioning of the tensor bundle format.
-const int kTensorBundleMinProducer = 0;
-const int kTensorBundleMinConsumer = 0;
-const int kTensorBundleVersion = 1;
+//const int kTensorBundleMinProducer = 0;
+//const int kTensorBundleMinConsumer = 0;
+//const int kTensorBundleVersion = 1;
 
 // Size of our input buffer for streaming reads
-static const int kBufferSize = 1024 * 1024;
+//static const int kBufferSize = 1024 * 1024;
 
 // Key to the special BundleHeaderProto entry.  Do not change this, as clients
 // can make the assumption that the header is always the first entry in the
 // bundle.
-const char* const kHeaderEntryKey = "";
+//const char* const kHeaderEntryKey = "";
 
 namespace {
 
