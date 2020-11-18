@@ -44,7 +44,7 @@ cc_library(
     hdrs = [
         "byte_swap.h",
         "tensor_bundle.h",
-		"tensor_bundle_dit.cc",
+		"tensor_bundle_dit.h",
     ],
     copts = tf_copts() + if_not_windows(["-Wno-sign-compare"]),
     deps = [
