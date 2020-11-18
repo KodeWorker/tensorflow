@@ -34,7 +34,7 @@ limitations under the License.
 #include "tensorflow/core/util/tensor_slice_reader_cache.h"
 #include "tensorflow/core/util/tensor_slice_writer.h"
 
-//#include "tensorflow/core/util/tensor_bundle/tensor_bundle.h"
+#include "tensorflow/core/util/tensor_bundle/tensor_bundle.h"
 #include "tensorflow/core/util/tensor_bundle/tensor_bundle_dit.h"
 
 namespace tensorflow {

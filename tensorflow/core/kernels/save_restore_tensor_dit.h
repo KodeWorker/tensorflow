@@ -50,11 +50,11 @@ void SaveTensors(
 //
 // restore_index indicates the variable name and slice to lookup
 // in context(1) and (2).
-
+/*
 void RestoreTensor(OpKernelContext* context,
                    checkpoint::TensorSliceReader::OpenTableFunction open_func,
                    int preferred_shard, bool restore_slice, int restore_index);
-
+*/
 // V2 checkpoint format.
 
 // Invokes the V2 checkpoint read path to read tensors.

@@ -44,7 +44,7 @@ limitations under the License.
 #include "tensorflow/core/util/tensor_bundle/byte_swap.h"
 #include "tensorflow/core/util/tensor_slice_util.h"
 
-#include "tensorflow/core/util/tensor_bundle/tensor_bundle.h"
+#include "tensorflow/core/util/tensor_bundle/tensor_bundle.h" // for extern variables in tensor_boundle
 
 namespace tensorflow {
 
