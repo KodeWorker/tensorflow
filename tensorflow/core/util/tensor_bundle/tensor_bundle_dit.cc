@@ -502,6 +502,8 @@ Status BundleWriterDIT::AddSlice(StringPiece full_tensor_key,
 
 // TODO(zongheng): on metadata write failure or !status_.ok(), consider removing
 // the orphaned data file.
+
+//*.index (metadata)
 Status BundleWriterDIT::Finish() {
   if (out_) {
     status_.Update(out_->Close());
