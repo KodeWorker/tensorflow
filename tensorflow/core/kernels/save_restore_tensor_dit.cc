@@ -38,7 +38,7 @@ limitations under the License.
 #include "tensorflow/core/util/tensor_bundle/tensor_bundle_dit.h"
 
 namespace tensorflow {
-
+/*
 void RestoreTensor(OpKernelContext* context,
                    checkpoint::TensorSliceReader::OpenTableFunction open_func,
                    int preferred_shard, bool restore_slice, int restore_index) {
@@ -129,7 +129,7 @@ void RestoreTensor(OpKernelContext* context,
   }
 #undef READER_COPY
 }
-
+*/
 namespace {
 
 // Tensors larger than this threshold will be restored from a thread-pool.
