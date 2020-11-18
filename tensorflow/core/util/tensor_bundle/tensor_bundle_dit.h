@@ -58,8 +58,8 @@ limitations under the License.
 //       "/fs/model/train/ckpt-step/ckpt" /* merged prefix */);
 //
 
-#ifndef TENSORFLOW_CORE_UTIL_TENSOR_BUNDLE_TENSOR_BUNDLE_H_
-#define TENSORFLOW_CORE_UTIL_TENSOR_BUNDLE_TENSOR_BUNDLE_H_
+#ifndef TENSORFLOW_CORE_UTIL_TENSOR_BUNDLE_TENSOR_BUNDLE_DIT_H_
+#define TENSORFLOW_CORE_UTIL_TENSOR_BUNDLE_TENSOR_BUNDLE_DIT_H_
 
 #include "tensorflow/core/protobuf/tensor_bundle.pb.h"
 

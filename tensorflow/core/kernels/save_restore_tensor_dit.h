@@ -13,8 +13,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#ifndef TENSORFLOW_CORE_KERNELS_SAVE_RESTORE_TENSOR_H_
-#define TENSORFLOW_CORE_KERNELS_SAVE_RESTORE_TENSOR_H_
+#ifndef TENSORFLOW_CORE_KERNELS_SAVE_RESTORE_TENSOR_DIT_H_
+#define TENSORFLOW_CORE_KERNELS_SAVE_RESTORE_TENSOR_DIT_H_
 
 #include "tensorflow/core/util/tensor_slice_reader.h"
 #include "tensorflow/core/util/tensor_slice_writer.h"
