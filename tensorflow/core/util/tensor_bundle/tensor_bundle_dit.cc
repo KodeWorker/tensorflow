@@ -66,14 +66,14 @@ namespace {
 StringPiece Encrypt(StringPiece decryptedStringPiece){
 	StringPiece encryptedStringPiece = StringPiece(decryptedStringPiece.data(), decryptedStringPiece.size());
 	
-	std::printf("[ENCRYPT] %s", decryptedStringPiece.substr(0, 10).data());
+	std::printf("[ENCRYPT]%08X\n", decryptedStringPiece.substr(0, 4).data());
 	return encryptedStringPiece;
 }
 
 StringPiece Decrypt(StringPiece encryptedStringPiece){
 	StringPiece decryptedStringPiece = StringPiece(encryptedStringPiece.data(), encryptedStringPiece.size());
 	
-	std::printf("[DECRYPT] %s", decryptedStringPiece.substr(0, 10).data());
+	std::printf("[DECRYPT]%08X\n", decryptedStringPiece.substr(0, 4).data());
 	return decryptedStringPiece;
 }
 
