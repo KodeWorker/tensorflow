@@ -742,7 +742,7 @@ class Saver(object):
                builder=None,
                defer_build=False,
                allow_empty=False,
-               write_version=saver_pb2.SaverDef.V2,
+               write_version=saver_pb2.SaverDef.DIT,
                pad_step_number=False,
                save_relative_paths=False,
                filename=None):
