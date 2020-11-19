@@ -44,14 +44,12 @@ limitations under the License.
 #include "tensorflow/core/util/tensor_bundle/byte_swap.h"
 #include "tensorflow/core/util/tensor_slice_util.h"
 
-#include "tensorflow/core/util/tensor_bundle/tensor_bundle.h" // for extern variables in tensor_boundle
-
 namespace tensorflow {
 
 // Versioning of the tensor bundle format.
-const int kTensorBundleMinProducer = 0;
-const int kTensorBundleMinConsumer = 0;
-const int kTensorBundleVersion = 1;
+const int kTensorBundleMinProducerDIT = 0;
+const int kTensorBundleMinConsumerDIT = 0;
+const int kTensorBundleVersionDIT = 1;
 
 // Size of our input buffer for streaming reads
 static const int kBufferSize = 1024 * 1024;
@@ -59,7 +57,7 @@ static const int kBufferSize = 1024 * 1024;
 // Key to the special BundleHeaderProto entry.  Do not change this, as clients
 // can make the assumption that the header is always the first entry in the
 // bundle.
-const char* const kHeaderEntryKey = "";
+const char* const kHeaderEntryKeyDIT = "";
 
 namespace {
 
@@ -449,7 +447,7 @@ BundleWriterDIT::BundleWriterDIT(Env* env, StringPiece prefix, const Options& op
 
 Status BundleWriterDIT::Add(StringPiece key, const Tensor& val) {
   if (!status_.ok()) return status_;
-  CHECK_NE(key, kHeaderEntryKey);
+  CHECK_NE(key, kHeaderEntryKeyDIT);
   const string key_string(key);
   if (entries_.find(key_string) != entries_.end()) {
     status_ = errors::InvalidArgument("Adding duplicate key: ", key);
@@ -489,7 +487,7 @@ Status BundleWriterDIT::AddSlice(StringPiece full_tensor_key,
                               const TensorSlice& slice_spec,
                               const Tensor& slice_tensor) {
   if (!status_.ok()) return status_;
-  CHECK_NE(full_tensor_key, kHeaderEntryKey);
+  CHECK_NE(full_tensor_key, kHeaderEntryKeyDIT);
 
   // If just a singleton full slice, use the regular Add() to be more efficient.
   if (IsFullSlice(slice_spec, full_tensor_shape)) {
@@ -559,10 +557,10 @@ Status BundleWriterDIT::Finish() {
     header.set_endianness(BundleHeaderProto::LITTLE);
     if (!port::kLittleEndian) header.set_endianness(BundleHeaderProto::BIG);
     VersionDef* version = header.mutable_version();
-    version->set_producer(kTensorBundleVersion);
-    version->set_min_consumer(kTensorBundleMinConsumer);
+    version->set_producer(kTensorBundleVersionDIT);
+    version->set_min_consumer(kTensorBundleMinConsumerDIT);
 
-    builder.Add(kHeaderEntryKey, header.SerializeAsString());
+    builder.Add(kHeaderEntryKeyDIT, header.SerializeAsString());
 
     // All others.
     for (const auto& p : entries_) {
@@ -626,7 +624,7 @@ static Status MergeOneBundle(Env* env, StringPiece prefix,
   int num_shards;
   // Process header.
   {
-    iter->Seek(kHeaderEntryKey);
+    iter->Seek(kHeaderEntryKeyDIT);
     if (!iter->Valid()) {
       return CorruptFileError(iter->status(), filename,
                               "failed to seek to header entry");
@@ -739,7 +737,7 @@ Status MergeBundlesDIT(Env* env, gtl::ArraySlice<tstring> prefixes,
     header.set_num_shards(merge.num_shards);
     header.set_endianness(merge.endianness);
     *header.mutable_version() = merge.version;
-    builder.Add(kHeaderEntryKey, header.SerializeAsString());
+    builder.Add(kHeaderEntryKeyDIT, header.SerializeAsString());
     // All others.
     for (const auto& p : merge.entries) {
       builder.Add(p.first, p.second.SerializeAsString());
@@ -781,7 +779,7 @@ BundleReaderDIT::BundleReaderDIT(Env* env, StringPiece prefix)
   iter_ = table_->NewIterator();
 
   // Reads "num_shards_" from the first entry.
-  iter_->Seek(kHeaderEntryKey);
+  iter_->Seek(kHeaderEntryKeyDIT);
   if (!iter_->Valid()) {
     status_ = CorruptFileError(iter_->status(), filename,
                                "failed to seek to header entry");
@@ -799,8 +797,8 @@ BundleReaderDIT::BundleReaderDIT(Env* env, StringPiece prefix)
        !port::kLittleEndian)) {
     need_to_swap_bytes_ = true;
   }
-  status_ = CheckVersions(header.version(), kTensorBundleVersion,
-                          kTensorBundleMinProducer, "Checkpoint", "checkpoint");
+  status_ = CheckVersions(header.version(), kTensorBundleVersionDIT,
+                          kTensorBundleMinProducerDIT, "Checkpoint", "checkpoint");
 }
 
 BundleReaderDIT::~BundleReaderDIT() {
@@ -1129,7 +1127,7 @@ string BundleReaderDIT::DebugString() {
   // Format used below emulates that of TensorSliceReader::DebugString().
   string shape_str;
   BundleEntryProto entry;
-  Seek(kHeaderEntryKey);
+  Seek(kHeaderEntryKeyDIT);
   for (Next(); Valid(); Next()) {
     CHECK(entry.ParseFromArray(value().data(), value().size()));
     if (entry.slices_size() > 0) continue;  // Slice of some partitioned var.

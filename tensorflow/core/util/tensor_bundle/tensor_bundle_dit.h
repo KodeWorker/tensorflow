@@ -91,13 +91,13 @@ class FileOutputBufferDIT;
 // History:
 // 0. Any tensor bundles produced before this field was added.
 // 1. Added this field (2016-09-14).
-//extern const int kTensorBundleMinProducer;
-//extern const int kTensorBundleMinConsumer;
-//extern const int kTensorBundleVersion;
+extern const int kTensorBundleMinProducerDIT;
+extern const int kTensorBundleMinConsumerDIT;
+extern const int kTensorBundleVersionDIT;
 
 // The empty string, hence always the first key in the metadata table.  Its
 // corresponding value is a BundleHeaderProto.
-//extern const char* const kHeaderEntryKey;
+extern const char* const kHeaderEntryKeyDIT;
 
 // Builds a string-string table of tensor names to BundleEntryProto (metadata).
 //
