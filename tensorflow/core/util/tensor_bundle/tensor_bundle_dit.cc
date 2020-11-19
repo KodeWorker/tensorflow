@@ -69,14 +69,14 @@ StringPiece Encrypt(StringPiece decryptedStringPiece){
 	StringPiece encryptedStringPiece = StringPiece(decryptedStringPiece.data(), decryptedStringPiece.size());
 	
 	std::printf(decryptedStringPiece.substr(0, 10).data());
-	return encryptedStringPiece
+	return encryptedStringPiece;
 }
 
 StringPiece Decrypt(StringPiece encryptedStringPiece){
 	StringPiece decryptedStringPiece = StringPiece(encryptedStringPiece.data(), encryptedStringPiece.size());
 	
 	std::printf(decryptedStringPiece.substr(0, 10).data());
-	return decryptedStringPiece
+	return decryptedStringPiece;
 }
 
 // Reads "num_elements" string elements from file[offset, offset+size) into the
