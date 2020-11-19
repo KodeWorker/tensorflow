@@ -331,7 +331,7 @@ class BaseSaverBuilder(object):
     Returns:
       An op to save the variables.
     """
-    if self._write_version == saver_pb2.SaverDef.V2:
+    if self._write_version == saver_pb2.SaverDef.V2 or self._write_version == saver_pb2.SaverDef.DIT:
       return self._AddShardedSaveOpsForV2(filename_tensor, per_device)
 
     num_shards = len(per_device)
@@ -1192,7 +1192,7 @@ class Saver(object):
       logging.warning("   `tf.train.Saver(write_version=tf.train.SaverDef.V2)`")
       logging.warning("now on by default.")
       logging.warning("*******************************************************")
-    elif self._write_version == saver_pb2.SaverDef.V1:
+    elif self._write_version == saver_pb2.SaverDef.DIT:
       logging.warning("*******************************************************")
       logging.warning("DIT's checkpoint format.")
       logging.warning("*******************************************************")

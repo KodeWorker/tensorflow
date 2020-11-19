@@ -251,7 +251,7 @@ Status WriteTensor(const Tensor& val, FileOutputBufferDIT* out,
   char* buf = GetBackingBuffer(val);
   VLOG(1) << "Appending " << *bytes_written << " bytes to file";
   // DIT encryption
-  // *.data
+  //return out->Append(StringPiece(buf, *bytes_written));
   return out->Append(Encrypt(StringPiece(buf, *bytes_written)));
 }
 
@@ -291,13 +291,21 @@ Status WriteStringTensor(const Tensor& val, FileOutputBufferDIT* out,
           *crc32c, reinterpret_cast<const char*>(&elem_size), sizeof(uint64));
     }
   }
-  TF_RETURN_IF_ERROR(out->Append(lengths));
+  // DIT encryption
+  //TF_RETURN_IF_ERROR(out->Append(lengths));
+  TF_RETURN_IF_ERROR(out->Append(Encrypt(lengths)));
   *bytes_written = lengths.size();
 
   // Writes the length checksum.
   const uint32 length_checksum = crc32c::Mask(*crc32c);
+  
+  // DIT encryption
+  /*
   TF_RETURN_IF_ERROR(out->Append(StringPiece(
       reinterpret_cast<const char*>(&length_checksum), sizeof(uint32))));
+  */
+  TF_RETURN_IF_ERROR(out->Append(Encrypt(StringPiece(
+      reinterpret_cast<const char*>(&length_checksum), sizeof(uint32)))));
   *crc32c = crc32c::Extend(
       *crc32c, reinterpret_cast<const char*>(&length_checksum), sizeof(uint32));
   *bytes_written += sizeof(uint32);
@@ -305,7 +313,9 @@ Status WriteStringTensor(const Tensor& val, FileOutputBufferDIT* out,
   // Writes all the string bytes out.
   for (int64 i = 0; i < val.NumElements(); ++i) {
     const tstring* string = &strings[i];
-    TF_RETURN_IF_ERROR(out->Append(*string));
+	// DIT encryption
+    //TF_RETURN_IF_ERROR(out->Append(*string));
+	TF_RETURN_IF_ERROR(out->Append(Encrypt(*string)));
     *bytes_written += string->size();
     *crc32c = crc32c::Extend(*crc32c, string->data(), string->size());
   }
@@ -337,20 +347,29 @@ Status WriteVariantTensor(const Tensor& val, FileOutputBufferDIT* out,
     const auto elem_size = static_cast<uint64>(elem.size());
     string len;
     core::PutVarint64(&len, elem_size);
-    TF_RETURN_IF_ERROR(out->Append(len));
+	// DIT encryption
+    //TF_RETURN_IF_ERROR(out->Append(len));
+	TF_RETURN_IF_ERROR(out->Append(Encrypt(len)));
     *crc32c = crc32c::Extend(*crc32c, reinterpret_cast<const char*>(&elem_size),
                              sizeof(uint64));
     *bytes_written += len.size();
 
     // Write the serialized variant.
-    TF_RETURN_IF_ERROR(out->Append(elem));
+	// DIT encryption
+    //TF_RETURN_IF_ERROR(out->Append(elem));
+	TF_RETURN_IF_ERROR(out->Append(Encrypt(elem)));
     *crc32c = crc32c::Extend(*crc32c, elem.data(), elem.size());
     *bytes_written += elem.size();
 
     // Write the checksum.
     const uint32 length_checksum = crc32c::Mask(*crc32c);
+	// DIT encryption
+	/*
     TF_RETURN_IF_ERROR(out->Append(StringPiece(
         reinterpret_cast<const char*>(&length_checksum), sizeof(uint32))));
+	*/
+	TF_RETURN_IF_ERROR(out->Append(Encrypt(StringPiece(
+        reinterpret_cast<const char*>(&length_checksum), sizeof(uint32)))));
     *crc32c =
         crc32c::Extend(*crc32c, reinterpret_cast<const char*>(&length_checksum),
                        sizeof(uint32));
