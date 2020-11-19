@@ -464,6 +464,7 @@ BundleWriterDIT::BundleWriterDIT(Env* env, StringPiece prefix, const Options& op
   VLOG(1) << "Writing to file " << tmp_data_path_;
 }
 
+// key_string encrypt
 Status BundleWriterDIT::Add(StringPiece key, const Tensor& val) {
   if (!status_.ok()) return status_;
   CHECK_NE(key, kHeaderEntryKeyDIT);
@@ -547,7 +548,7 @@ Status BundleWriterDIT::AddSlice(StringPiece full_tensor_key,
 
 // DIT encryption
 // 1. *.index (metadata)
-// 2. key encryption
+// 2. key encryption ---> see Writer::Add
 Status BundleWriterDIT::Finish() {
   if (out_) {
     status_.Update(out_->Close());
@@ -603,7 +604,7 @@ Status BundleWriterDIT::Finish() {
 // Merging tensor bundles.
 
 // Accumulator of metadata states during a merge.
-
+/*
 struct MergeState {
   // Accumulated from the header entries.
   int num_shards = 0;
@@ -620,11 +621,10 @@ struct MergeState {
   // Data file path -> new shard id in the final merged bundle.
   std::unordered_map<string, int32> shard_ids;
 };
-
-
+*/
 // Merges entries of "prefix" into the accumulator state "merge".
 // Returns OK iff the merge succeeds.
-
+/*
 static Status MergeOneBundle(Env* env, StringPiece prefix,
                              MergeState* merge_state) {
   VLOG(1) << "Merging bundle:" << prefix;
@@ -723,8 +723,8 @@ static Status MergeOneBundle(Env* env, StringPiece prefix,
   }
   return Status::OK();
 }
-
-
+*/
+/*
 Status MergeBundlesDIT(Env* env, gtl::ArraySlice<tstring> prefixes,
                     StringPiece merged_prefix) {
   // Merges all metadata tables.
@@ -773,7 +773,7 @@ Status MergeBundlesDIT(Env* env, gtl::ArraySlice<tstring> prefixes,
   }
   return status;
 }
-
+*/
 // Interface for reading a tensor bundle.
 
 BundleReaderDIT::BundleReaderDIT(Env* env, StringPiece prefix)

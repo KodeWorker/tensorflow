@@ -33,6 +33,7 @@ limitations under the License.
 
 #include "tensorflow/core/kernels/save_restore_tensor.h"
 #include "tensorflow/core/kernels/save_restore_tensor_dit.h"
+#include "tensorflow/core/util/tensor_bundle/tensor_bundle.h"
 #include "tensorflow/core/util/tensor_bundle/tensor_bundle_dit.h"
 
 namespace tensorflow {
@@ -218,9 +219,15 @@ class MergeDITCheckpoints : public OpKernel {
         gtl::ArraySlice<tstring>(checkpoint_prefixes.flat<tstring>());
     Env* env = Env::Default();
     const string& merged_prefix = destination_prefix.scalar<tstring>()();
-    OP_REQUIRES_OK(
+    // DIT encryption
+	// not implemented
+	/*
+	OP_REQUIRES_OK(
         context, tensorflow::MergeBundlesDIT(env, input_prefixes, merged_prefix));
-
+	*/
+	OP_REQUIRES_OK(
+        context, tensorflow::MergeBundles(env, input_prefixes, merged_prefix));
+	
     if (delete_old_dirs_) {
       const string merged_dir(io::Dirname(merged_prefix));
       for (const string& input_prefix : input_prefixes) {
