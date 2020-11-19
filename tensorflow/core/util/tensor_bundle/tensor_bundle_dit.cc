@@ -226,7 +226,7 @@ tstring* GetStringBackingBuffer(const Tensor& val) {
 
 // DIT decryption
 // 1. restore value
-Status ParseEntryProto(StringPiece key, StringPiece value,
+Status ParseEntryProtoDIT(StringPiece key, StringPiece value,
                        protobuf::MessageLite* out) {
   
   StringPiece encryptedValue = StringPiece(value.data(), value.size());
@@ -234,6 +234,15 @@ Status ParseEntryProto(StringPiece key, StringPiece value,
   
   //if (!out->ParseFromArray(value.data(), value.size())) {
   if (!out->ParseFromArray(decryptedValue.data(), decryptedValue.size())) {
+    return errors::DataLoss("Entry for key ", key, " not parseable.");
+  }
+  return Status::OK();
+}
+
+Status ParseEntryProtoDIT(StringPiece key, StringPiece value,
+                       protobuf::MessageLite* out) {
+  
+  if (!out->ParseFromArray(value.data(), value.size())) {
     return errors::DataLoss("Entry for key ", key, " not parseable.");
   }
   return Status::OK();
@@ -851,7 +860,7 @@ Status BundleReaderDIT::GetBundleEntryProto(StringPiece key,
 
   BundleEntryProto entry_copy;
   TF_RETURN_IF_ERROR(
-      ParseEntryProto(iter_->key(), iter_->value(), &entry_copy));
+      ParseEntryProtoDIT(iter_->key(), iter_->value(), &entry_copy));
   if (!TensorShape::IsValid(entry_copy.shape())) {
     return errors::DataLoss("Invalid tensor shape: ", key, " ",
                             entry_copy.shape().ShortDebugString());
