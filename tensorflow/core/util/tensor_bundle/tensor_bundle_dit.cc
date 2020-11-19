@@ -63,6 +63,22 @@ const char* const kHeaderEntryKey = "";
 
 namespace {
 
+// DIT
+// Encryption / Decryption
+StringPiece Encrypt(StringPiece decryptedStringPiece){
+	StringPiece encryptedStringPiece = StringPiece(decryptedStringPiece.data(), decryptedStringPiece.size());
+	
+	std::printf(decryptedStringPiece.substr(0, 10).data());
+	return encryptedStringPiece
+}
+
+StringPiece Decrypt(StringPiece encryptedStringPiece){
+	StringPiece decryptedStringPiece = StringPiece(encryptedStringPiece.data(), encryptedStringPiece.size());
+	
+	std::printf(decryptedStringPiece.substr(0, 10).data());
+	return decryptedStringPiece
+}
+
 // Reads "num_elements" string elements from file[offset, offset+size) into the
 // length-N "destination".  Discards the original content of "destination".
 //
@@ -344,22 +360,6 @@ Status WriteVariantTensor(const Tensor& val, FileOutputBufferDIT* out,
   }
 
   return Status::OK();
-}
-
-// DIT
-// Encryption / Decryption
-StringPiece Encrypt(StringPiece decryptedStringPiece){
-	StringPiece encryptedStringPiece = StringPiece(decryptedStringPiece.data(), decryptedStringPiece.size());
-	
-	std::printf(decryptedStringPiece.substr(0, 10).data());
-	return encryptedStringPiece
-}
-
-StringPiece Decrypt(StringPiece encryptedStringPiece){
-	StringPiece decryptedStringPiece = StringPiece(encryptedStringPiece.data(), encryptedStringPiece.size());
-	
-	std::printf(decryptedStringPiece.substr(0, 10).data());
-	return decryptedStringPiece
 }
 
 // Returns whether "slice_spec" is a full slice, with respect to the full shape.
