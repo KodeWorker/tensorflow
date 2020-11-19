@@ -391,7 +391,7 @@ def _set_checkpoint_initializer(variable,
                                 tensor_name,
                                 slice_spec,
                                 name="checkpoint_initializer",
-                                write_version=saver_pb2.SaverDef.V2):
+                                write_version=saver_pb2.SaverDef.DIT):
   """Overrides given variable's initialization op.
 
   Sets variable initializer to assign op that initializes variable from tensor's

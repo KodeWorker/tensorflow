@@ -191,7 +191,7 @@ class PythonStringStateSaveable(PythonStateSaveable):
 class CheckpointPosition(object):
   """Indicates a position within a `_CheckpointRestoreCoordinator`."""
 
-  def __init__(self, checkpoint, proto_id, write_version=saver_pb2.SaverDef.V2):
+  def __init__(self, checkpoint, proto_id, write_version=saver_pb2.SaverDef.DIT):
     """Specify an object within a checkpoint.
 
     Args:

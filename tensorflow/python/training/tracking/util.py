@@ -299,7 +299,7 @@ class _CheckpointRestoreCoordinator(object):
 class _NameBasedRestoreCoordinator(object):
   """Keeps the status of a name-based checkpoint restore."""
 
-  def __init__(self, save_path, dtype_map=None, write_version=saver_pb2.SaverDef.V2):
+  def __init__(self, save_path, dtype_map=None, write_version=saver_pb2.SaverDef.DIT):
     self.save_path = save_path
     self.dtype_map = dtype_map
     self._write_version = write_version

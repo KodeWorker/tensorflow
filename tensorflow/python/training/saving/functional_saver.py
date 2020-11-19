@@ -38,7 +38,7 @@ from tensorflow.python.util import nest
 class _SingleDeviceSaver(object):
   """Saves and restores checkpoints from the current device."""
 
-  def __init__(self, saveable_objects, write_version=saver_pb2.SaverDef.V2):
+  def __init__(self, saveable_objects, write_version=saver_pb2.SaverDef.DIT):
     """Specify a list of `SaveableObject`s to save and restore.
 
     Args:

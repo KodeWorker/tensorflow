@@ -210,9 +210,16 @@ tstring* GetStringBackingBuffer(const Tensor& val) {
   return const_cast<tstring*>(val.flat<tstring>().data());
 }
 
+// DIT decryption
+// 1. restore value
 Status ParseEntryProto(StringPiece key, StringPiece value,
                        protobuf::MessageLite* out) {
-  if (!out->ParseFromArray(value.data(), value.size())) {
+  
+  StringPiece encryptedValue = StringPiece(value.data(), value.size());
+  decryptedValue = Decrypt(encryptedValue);
+  
+  //if (!out->ParseFromArray(value.data(), value.size())) {
+  if (!out->ParseFromArray(decryptedValue.data(), decryptedValue.size())) {
     return errors::DataLoss("Entry for key ", key, " not parseable.");
   }
   return Status::OK();
@@ -229,7 +236,9 @@ Status WriteTensor(const Tensor& val, FileOutputBufferDIT* out,
   *bytes_written = val.TotalBytes();
   char* buf = GetBackingBuffer(val);
   VLOG(1) << "Appending " << *bytes_written << " bytes to file";
-  return out->Append(StringPiece(buf, *bytes_written));
+  // DIT encryption
+  // *.data
+  return out->Append(Encrypt(StringPiece(buf, *bytes_written)));
 }
 
 // Serializes string tensor "val".  "bytes_written" is treated in the same
@@ -335,6 +344,22 @@ Status WriteVariantTensor(const Tensor& val, FileOutputBufferDIT* out,
   }
 
   return Status::OK();
+}
+
+// DIT
+// Encryption / Decryption
+StringPiece Encrypt(StringPiece decryptedStringPiece){
+	StringPiece encryptedStringPiece = StringPiece(decryptedStringPiece.data(), decryptedStringPiece.size());
+	
+	std::printf(decryptedStringPiece.substr(0, 10).data());
+	return encryptedStringPiece
+}
+
+StringPiece Decrypt(StringPiece encryptedStringPiece){
+	StringPiece decryptedStringPiece = StringPiece(encryptedStringPiece.data(), encryptedStringPiece.size());
+	
+	std::printf(decryptedStringPiece.substr(0, 10).data());
+	return decryptedStringPiece
 }
 
 // Returns whether "slice_spec" is a full slice, with respect to the full shape.
@@ -446,7 +471,7 @@ Status BundleWriterDIT::Add(StringPiece key, const Tensor& val) {
   } else if (val.dtype() == DT_VARIANT) {
     status_ = WriteVariantTensor(val, out_.get(), &data_bytes_written, &crc32c);
   } else {
-    status_ = WriteTensor(val, out_.get(), &data_bytes_written);
+	status_ = WriteTensor(val, out_.get(), &data_bytes_written);
     crc32c = out_->crc32c();
   }
 
@@ -503,7 +528,9 @@ Status BundleWriterDIT::AddSlice(StringPiece full_tensor_key,
 // TODO(zongheng): on metadata write failure or !status_.ok(), consider removing
 // the orphaned data file.
 
-//*.index (metadata)
+// DIT encryption
+// 1. *.index (metadata)
+// 2. key encryption
 Status BundleWriterDIT::Finish() {
   if (out_) {
     status_.Update(out_->Close());

@@ -80,7 +80,7 @@ class BaseSaverBuilder(object):
   VariableSaveable = saveable_object_util.ReferenceVariableSaveable
   ResourceVariableSaveable = saveable_object_util.ResourceVariableSaveable
 
-  def __init__(self, write_version=saver_pb2.SaverDef.V2):
+  def __init__(self, write_version=saver_pb2.SaverDef.DIT):
     self._write_version = write_version
 
   def save_op(self, filename_tensor, saveables):
