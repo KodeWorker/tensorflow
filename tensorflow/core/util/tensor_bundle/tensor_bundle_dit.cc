@@ -232,7 +232,7 @@ Status ParseEntryProto(StringPiece key, StringPiece value,
                        protobuf::MessageLite* out) {
   
   StringPiece encryptedValue = StringPiece(value.data(), value.size());
-  decryptedValue = Decrypt(encryptedValue);
+  StringPiece decryptedValue = Decrypt(encryptedValue);
   
   //if (!out->ParseFromArray(value.data(), value.size())) {
   if (!out->ParseFromArray(decryptedValue.data(), decryptedValue.size())) {
