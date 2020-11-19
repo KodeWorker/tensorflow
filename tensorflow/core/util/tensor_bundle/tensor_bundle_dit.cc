@@ -239,7 +239,7 @@ Status ParseEntryProtoDIT(StringPiece key, StringPiece value,
   return Status::OK();
 }
 
-Status ParseEntryProtoDIT(StringPiece key, StringPiece value,
+Status ParseEntryProto(StringPiece key, StringPiece value,
                        protobuf::MessageLite* out) {
   
   if (!out->ParseFromArray(value.data(), value.size())) {
