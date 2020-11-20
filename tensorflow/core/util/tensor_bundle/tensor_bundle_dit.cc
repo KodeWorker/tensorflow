@@ -264,7 +264,8 @@ Status WriteTensor(const Tensor& val, FileOutputBufferDIT* out,
   *bytes_written = val.TotalBytes();
   char* buf = GetBackingBuffer(val);
   VLOG(1) << "Appending " << *bytes_written << " bytes to file";
-  return out->Append(StringPiece(buf, *bytes_written));
+  /* +++ DIT +++ */
+  return out->Append(Encrypt(StringPiece(buf, *bytes_written)));
 }
 
 // Serializes string tensor "val".  "bytes_written" is treated in the same
@@ -919,7 +920,10 @@ Status BundleReaderDIT::GetValue(const BundleEntryProto& entry, Tensor* val) {
       TF_RETURN_IF_ERROR(buffered_file->ReadNBytes(entry.size(), backing_buffer,
                                                    &unused_bytes_read));
     }
-		
+	/* +++ DIT +++ */
+	StringPiece decryptedStringPiece = Decrypt(ret->tensor_data())
+	backing_buffer = const_cast<char*>((decryptedStringPiece.data()));
+	
     // Note that we compute the checksum *before* byte-swapping. The checksum
     // should be on the bytes in the order they appear in the file.
     actual_crc32c = crc32c::Value(backing_buffer, entry.size());
@@ -1165,10 +1169,6 @@ Status FileOutputBufferDIT::Append(StringPiece data) {
   // In the below, it is critical to calculate the checksum on the actually
   // copied bytes, not the source bytes.  This is because "data" typically
   // points to tensor buffers, which may be concurrently written.
-  
-  /* +++ DIT +++ */
-  StringPiece encryptedStringPiece = Encrypt(data);
-  data = StringPiece(encryptedStringPiece.data(), encryptedStringPiece.size());
   
   if (data.size() + position_ <= buffer_size_) {
     // Can fit into the current buffer.

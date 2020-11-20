@@ -172,9 +172,10 @@ class BundleWriterDIT {
 //
 // Once merged, makes a best effort to delete the old metadata files.
 // Returns OK iff all bundles are successfully merged.
+/*
 Status MergeBundlesDIT(Env* env, gtl::ArraySlice<tstring> prefixes,
                     StringPiece merged_prefix);
-
+*/
 // On construction, silently attempts to read the metadata associated with
 // "prefix".  If caller intends to call any function afterwards, "status()"
 // must be checked.
@@ -267,9 +268,6 @@ class BundleReaderDIT {
   // On non-OK return, clears "entry" for the caller.
   // REQUIRES: status().ok()
   Status GetBundleEntryProto(StringPiece key,
-                             BundleEntryProto* entry) TF_MUST_USE_RESULT;
-
-  Status GetBundleEntryProtoDIT(StringPiece key,
                              BundleEntryProto* entry) TF_MUST_USE_RESULT;
 
   // Reads the tensor value described by the metadata proto "entry".
