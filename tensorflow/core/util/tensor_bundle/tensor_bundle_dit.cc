@@ -63,24 +63,26 @@ namespace {
 
 /* +++ DIT +++ */
 StringPiece Encrypt(StringPiece decryptedStringPiece){
-	StringPiece encryptedStringPiece = StringPiece(decryptedStringPiece.data(), decryptedStringPiece.size());
+	
+	char* buf = decryptedStringPiece.data();
+	int length = decryptedStringPiece.size();
 	
 	//std::printf("[ENCRYPT]%08X\n", decryptedStringPiece.substr(0, 4).data());
 	std::printf("[ENCRYPT]");
-	for (int i=0; i<decryptedStringPiece.size(); i++){
-		char origin_char = decryptedStringPiece[i];
+	for (int i=0; i<length; i++){
+		char origin_char = buf[i];
 		char encrypt_char = (origin_char << 1) | (origin_char >> 7);
-		encryptedStringPiece.replace(i,1,encrypt_char);   
+		buf[i] = encrypt_char;   
 	}
 	
-	return encryptedStringPiece;
+	return StringPiece(buf, length);
 }
 
 /* +++ DIT +++ */
 StringPiece Decrypt(StringPiece encryptedStringPiece){
 	StringPiece decryptedStringPiece = StringPiece(encryptedStringPiece.data(), encryptedStringPiece.size());
 	
-	std::printf("[DECRYPT]%08X\n", decryptedStringPiece.substr(0, 4).data());
+	//std::printf("[DECRYPT]%08X\n", decryptedStringPiece.substr(0, 4).data());
 	return decryptedStringPiece;
 }
 
@@ -545,7 +547,7 @@ Status BundleWriterDIT::AddSlice(StringPiece full_tensor_key,
 // TODO(zongheng): on metadata write failure or !status_.ok(), consider removing
 // the orphaned data file.
 
-// DIT encryption
+/* +++ DIT +++ */
 // 1. *.index (metadata)
 // 2. key encryption ---> see Writer::Add
 Status BundleWriterDIT::Finish() {
