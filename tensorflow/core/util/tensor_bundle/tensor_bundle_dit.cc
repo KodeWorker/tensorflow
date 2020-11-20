@@ -62,13 +62,17 @@ const char* const kHeaderEntryKeyDIT = "";
 namespace {
 
 /* +++ DIT +++ */
+int nTotalWriteLenght = 0;
+int nTotalReadLenght = 0;
+
 StringPiece Encrypt(StringPiece decryptedStringPiece){
 	
 	char* buf = const_cast<char*>(decryptedStringPiece.data());
 	int length = decryptedStringPiece.size();
 	
-	//std::printf("[ENCRYPT]%08X\n", decryptedStringPiece.substr(0, 4).data());
 	std::printf("[ENCRYPT]");
+	nTotalWriteLenght += length;
+	std::printf("%d\n", nTotalWriteLenght);
 	for (int i=0; i<length; i++){
 		char origin_char = buf[i];
 		char encrypt_char = (origin_char << 1) | ((origin_char >> 7) & 1);
@@ -80,10 +84,19 @@ StringPiece Encrypt(StringPiece decryptedStringPiece){
 
 /* +++ DIT +++ */
 StringPiece Decrypt(StringPiece encryptedStringPiece){
-	StringPiece decryptedStringPiece = StringPiece(encryptedStringPiece.data(), encryptedStringPiece.size());
 	
-	//std::printf("[DECRYPT]%08X\n", decryptedStringPiece.substr(0, 4).data());
-	return decryptedStringPiece;
+	std::printf("[DECRYPT]");
+	char* buf = const_cast<char*>(encryptedStringPiece.data());
+	int length = encryptedStringPiece.size();
+	nTotalReadLenght += length;
+	std::printf("%d\n", nTotalReadLenght);
+	for (int i=0; i<length; i++){
+		char origin_char = buf[i];
+		char decrypt_char = (origin_char << 7) | ((origin_char >> 1) & (128-1));
+		buf[i] = decrypt_char;
+	}
+	
+	return StringPiece(buf, length);
 }
 
 // Reads "num_elements" string elements from file[offset, offset+size) into the
@@ -536,6 +549,7 @@ Status BundleWriterDIT::AddSlice(StringPiece full_tensor_key,
 // 1. *.index (metadata)
 // 2. key encryption ---> see Writer::Add
 Status BundleWriterDIT::Finish() {
+
   if (out_) {
     status_.Update(out_->Close());
     out_ = nullptr;
@@ -848,8 +862,6 @@ Status BundleReaderDIT::GetBundleEntryProto(StringPiece key,
 }
 
 Status BundleReaderDIT::GetValue(const BundleEntryProto& entry, Tensor* val) {
-  /* +++ DIT +++ */
-  std::printf("[GetValue]");
   
   Tensor* ret = val;
   const TensorShape stored_shape(TensorShape(entry.shape()));
@@ -901,10 +913,17 @@ Status BundleReaderDIT::GetValue(const BundleEntryProto& entry, Tensor* val) {
       StringPiece sp;
       TF_RETURN_IF_ERROR(buffered_file->file()->Read(
           entry.offset(), entry.size(), &sp, backing_buffer));
+      /* +++ DIT +++ */
+	  sp = Decrypt(sp);
+	  
       if (sp.data() != backing_buffer) {
         memmove(backing_buffer, sp.data(), entry.size());
       }
     } else {
+	  /* +++ DIT +++ */
+	  StringPiece sp = Decrypt(ret->tensor_data());
+	  backing_buffer = const_cast<char*>((sp.data()));
+	  
       TF_RETURN_IF_ERROR(buffered_file->ReadNBytes(entry.size(), backing_buffer,
                                                    &unused_bytes_read));
     }
