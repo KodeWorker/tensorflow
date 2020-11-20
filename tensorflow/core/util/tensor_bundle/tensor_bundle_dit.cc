@@ -814,7 +814,7 @@ BundleReaderDIT::BundleReaderDIT(Env* env, StringPiece prefix)
     return;
   }
   BundleHeaderProto header;
-  status_ = ParseEntryProto(iter_->key(), iter_->value(), &header);
+  status_ = ParseEntryProtoDIT(iter_->key(), iter_->value(), &header);
   if (!status_.ok()) {
     status_ = CorruptFileError(status_, filename, "unable to parse header");
     return;
@@ -850,6 +850,27 @@ BundleReaderDIT::~BundleReaderDIT() {
 }
 
 Status BundleReaderDIT::GetBundleEntryProto(StringPiece key,
+                                         BundleEntryProto* entry) {
+  entry->Clear();
+  TF_CHECK_OK(status_);
+  Seek(key);
+  if (!iter_->Valid() || iter_->key() != key) {
+    return errors::NotFound("Key ", key, " not found in checkpoint");
+  }
+
+  BundleEntryProto entry_copy;
+  TF_RETURN_IF_ERROR(
+      ParseEntryProto(iter_->key(), iter_->value(), &entry_copy));
+  if (!TensorShape::IsValid(entry_copy.shape())) {
+    return errors::DataLoss("Invalid tensor shape: ", key, " ",
+                            entry_copy.shape().ShortDebugString());
+  }
+
+  *entry = entry_copy;
+  return Status::OK();
+}
+
+Status BundleReaderDIT::GetBundleEntryProtoDIT(StringPiece key,
                                          BundleEntryProto* entry) {
   entry->Clear();
   TF_CHECK_OK(status_);
@@ -968,7 +989,7 @@ Status BundleReaderDIT::GetValue(const BundleEntryProto& entry, Tensor* val) {
 Status BundleReaderDIT::Lookup(StringPiece key, Tensor* val) {
   CHECK(val != nullptr);
   BundleEntryProto entry;
-  TF_RETURN_IF_ERROR(GetBundleEntryProto(key, &entry));
+  TF_RETURN_IF_ERROR(GetBundleEntryProtoDIT(key, &entry));
 
   if (entry.slices().empty()) {
     return GetValue(entry, val);
@@ -982,7 +1003,7 @@ Status BundleReaderDIT::Lookup(StringPiece key, Tensor* val) {
 Status BundleReaderDIT::ReadCurrent(Tensor* val) {
   CHECK(val != nullptr);
   BundleEntryProto entry;
-  TF_RETURN_IF_ERROR(ParseEntryProto(iter_->key(), iter_->value(), &entry));
+  TF_RETURN_IF_ERROR(ParseEntryProtoDIT(iter_->key(), iter_->value(), &entry));
   if (!TensorShape::IsValid(entry.shape())) {
     return errors::DataLoss("Invalid tensor shape: ", iter_->key(), " ",
                             entry.shape().ShortDebugString());
@@ -1001,7 +1022,7 @@ Status BundleReaderDIT::LookupTensorSlices(StringPiece key,
                                         std::vector<TensorSlice>* slices) {
   slices->clear();
   BundleEntryProto entry;
-  TF_RETURN_IF_ERROR(GetBundleEntryProto(key, &entry));
+  TF_RETURN_IF_ERROR(GetBundleEntryProtoDIT(key, &entry));
   slices->reserve(entry.slices_size());
   for (const auto& slice : entry.slices()) {
     slices->emplace_back(slice);
@@ -1013,7 +1034,7 @@ Status BundleReaderDIT::LookupSlice(StringPiece full_tensor_key,
                                  const TensorSlice& slice_spec, Tensor* val) {
   CHECK(val != nullptr);
   BundleEntryProto entry;
-  TF_RETURN_IF_ERROR(GetBundleEntryProto(full_tensor_key, &entry));
+  TF_RETURN_IF_ERROR(GetBundleEntryProtoDIT(full_tensor_key, &entry));
   return GetSliceValue(full_tensor_key, entry, slice_spec, val);
 }
 

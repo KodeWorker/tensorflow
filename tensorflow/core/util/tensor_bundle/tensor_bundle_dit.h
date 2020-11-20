@@ -269,6 +269,9 @@ class BundleReaderDIT {
   Status GetBundleEntryProto(StringPiece key,
                              BundleEntryProto* entry) TF_MUST_USE_RESULT;
 
+  Status GetBundleEntryProtoDIT(StringPiece key,
+                             BundleEntryProto* entry) TF_MUST_USE_RESULT;
+
   // Reads the tensor value described by the metadata proto "entry".
   // Usage for "val" follows the comment of "Lookup()".
   Status GetValue(const BundleEntryProto& entry,
