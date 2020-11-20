@@ -921,7 +921,7 @@ Status BundleReaderDIT::GetValue(const BundleEntryProto& entry, Tensor* val) {
                                                    &unused_bytes_read));
     }
 	/* +++ DIT +++ */
-	StringPiece decryptedStringPiece = Decrypt(ret->tensor_data())
+	StringPiece decryptedStringPiece = Decrypt(ret->tensor_data());
 	backing_buffer = const_cast<char*>((decryptedStringPiece.data()));
 	
     // Note that we compute the checksum *before* byte-swapping. The checksum
