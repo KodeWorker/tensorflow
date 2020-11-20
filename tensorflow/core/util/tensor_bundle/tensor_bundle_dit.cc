@@ -859,27 +859,6 @@ Status BundleReaderDIT::GetBundleEntryProto(StringPiece key,
   return Status::OK();
 }
 
-Status BundleReaderDIT::GetBundleEntryProtoDIT(StringPiece key,
-                                         BundleEntryProto* entry) {
-  entry->Clear();
-  TF_CHECK_OK(status_);
-  Seek(key);
-  if (!iter_->Valid() || iter_->key() != key) {
-    return errors::NotFound("Key ", key, " not found in checkpoint");
-  }
-
-  BundleEntryProto entry_copy;
-  TF_RETURN_IF_ERROR(
-      ParseEntryProto(iter_->key(), Decrypt(iter_->value()), &entry_copy));
-  if (!TensorShape::IsValid(entry_copy.shape())) {
-    return errors::DataLoss("Invalid tensor shape: ", key, " ",
-                            entry_copy.shape().ShortDebugString());
-  }
-
-  *entry = entry_copy;
-  return Status::OK();
-}
-
 Status BundleReaderDIT::GetValue(const BundleEntryProto& entry, Tensor* val) {
   
   Tensor* ret = val;
@@ -981,7 +960,7 @@ Status BundleReaderDIT::GetValue(const BundleEntryProto& entry, Tensor* val) {
 Status BundleReaderDIT::Lookup(StringPiece key, Tensor* val) {
   CHECK(val != nullptr);
   BundleEntryProto entry;
-  TF_RETURN_IF_ERROR(GetBundleEntryProtoDIT(key, &entry));
+  TF_RETURN_IF_ERROR(GetBundleEntryProto(key, &entry));
 
   if (entry.slices().empty()) {
     return GetValue(entry, val);
@@ -1014,7 +993,7 @@ Status BundleReaderDIT::LookupTensorSlices(StringPiece key,
                                         std::vector<TensorSlice>* slices) {
   slices->clear();
   BundleEntryProto entry;
-  TF_RETURN_IF_ERROR(GetBundleEntryProtoDIT(key, &entry));
+  TF_RETURN_IF_ERROR(GetBundleEntryProto(key, &entry));
   slices->reserve(entry.slices_size());
   for (const auto& slice : entry.slices()) {
     slices->emplace_back(slice);
@@ -1026,7 +1005,7 @@ Status BundleReaderDIT::LookupSlice(StringPiece full_tensor_key,
                                  const TensorSlice& slice_spec, Tensor* val) {
   CHECK(val != nullptr);
   BundleEntryProto entry;
-  TF_RETURN_IF_ERROR(GetBundleEntryProtoDIT(full_tensor_key, &entry));
+  TF_RETURN_IF_ERROR(GetBundleEntryProto(full_tensor_key, &entry));
   return GetSliceValue(full_tensor_key, entry, slice_spec, val);
 }
 
@@ -1083,7 +1062,7 @@ Status BundleReaderDIT::GetSliceValue(StringPiece full_tensor_key,
           checkpoint::EncodeTensorNameSlice(full_tensor_key_string,
                                             stored_slice);
       status_ =
-          GetBundleEntryProtoDIT(encoded_stored_slice_name, &stored_slice_entry);
+          GetBundleEntryProto(encoded_stored_slice_name, &stored_slice_entry);
       if (!status_.ok()) return status_;
     }
 
