@@ -1153,7 +1153,7 @@ bool BundleReaderDIT::Contains(StringPiece key) {
 Status BundleReaderDIT::LookupDtypeAndShape(StringPiece key, DataType* dtype,
                                          TensorShape* shape) {
   BundleEntryProto entry;
-  TF_RETURN_IF_ERROR(GetBundleEntryProtoDIT(key, &entry));
+  TF_RETURN_IF_ERROR(GetBundleEntryProto(key, &entry));
   *dtype = entry.dtype();
   *shape = TensorShape(entry.shape());
   return Status::OK();
