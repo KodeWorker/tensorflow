@@ -848,6 +848,9 @@ Status BundleReaderDIT::GetBundleEntryProto(StringPiece key,
 }
 
 Status BundleReaderDIT::GetValue(const BundleEntryProto& entry, Tensor* val) {
+  /* +++ DIT +++ */
+  std::printf("[GetValue]");
+  
   Tensor* ret = val;
   const TensorShape stored_shape(TensorShape(entry.shape()));
   if (val->NumElements() == 0) {
