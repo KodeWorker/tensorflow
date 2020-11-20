@@ -64,7 +64,7 @@ namespace {
 /* +++ DIT +++ */
 StringPiece Encrypt(StringPiece decryptedStringPiece){
 	
-	char* buf = decryptedStringPiece.data();
+	char* buf = const_cast<char*>(decryptedStringPiece.data());
 	int length = decryptedStringPiece.size();
 	
 	//std::printf("[ENCRYPT]%08X\n", decryptedStringPiece.substr(0, 4).data());
@@ -231,21 +231,6 @@ char* GetBackingBuffer(const Tensor& val) {
 tstring* GetStringBackingBuffer(const Tensor& val) {
   CHECK_EQ(DT_STRING, val.dtype());
   return const_cast<tstring*>(val.flat<tstring>().data());
-}
-
-/* +++ DIT +++ */
-// 1. restore values
-Status ParseEntryProtoDIT(StringPiece key, StringPiece value,
-                       protobuf::MessageLite* out) {
-  
-  StringPiece encryptedValue = StringPiece(value.data(), value.size());
-  StringPiece decryptedValue = Decrypt(encryptedValue);
-  
-  //if (!out->ParseFromArray(value.data(), value.size())) {
-  if (!out->ParseFromArray(decryptedValue.data(), decryptedValue.size())) {
-    return errors::DataLoss("Entry for key ", key, " not parseable.");
-  }
-  return Status::OK();
 }
 
 Status ParseEntryProto(StringPiece key, StringPiece value,
@@ -862,27 +847,6 @@ Status BundleReaderDIT::GetBundleEntryProto(StringPiece key,
   return Status::OK();
 }
 
-Status BundleReaderDIT::GetBundleEntryProtoDIT(StringPiece key,
-                                         BundleEntryProto* entry) {
-  entry->Clear();
-  TF_CHECK_OK(status_);
-  Seek(key);
-  if (!iter_->Valid() || iter_->key() != key) {
-    return errors::NotFound("Key ", key, " not found in checkpoint");
-  }
-
-  BundleEntryProto entry_copy;
-  TF_RETURN_IF_ERROR(
-      ParseEntryProtoDIT(iter_->key(), iter_->value(), &entry_copy));
-  if (!TensorShape::IsValid(entry_copy.shape())) {
-    return errors::DataLoss("Invalid tensor shape: ", key, " ",
-                            entry_copy.shape().ShortDebugString());
-  }
-
-  *entry = entry_copy;
-  return Status::OK();
-}
-
 Status BundleReaderDIT::GetValue(const BundleEntryProto& entry, Tensor* val) {
   Tensor* ret = val;
   const TensorShape stored_shape(TensorShape(entry.shape()));
@@ -981,7 +945,7 @@ Status BundleReaderDIT::GetValue(const BundleEntryProto& entry, Tensor* val) {
 Status BundleReaderDIT::Lookup(StringPiece key, Tensor* val) {
   CHECK(val != nullptr);
   BundleEntryProto entry;
-  TF_RETURN_IF_ERROR(GetBundleEntryProtoDIT(key, &entry));
+  TF_RETURN_IF_ERROR(GetBundleEntryProto(key, &entry));
 
   if (entry.slices().empty()) {
     return GetValue(entry, val);
@@ -1014,7 +978,7 @@ Status BundleReaderDIT::LookupTensorSlices(StringPiece key,
                                         std::vector<TensorSlice>* slices) {
   slices->clear();
   BundleEntryProto entry;
-  TF_RETURN_IF_ERROR(GetBundleEntryProtoDIT(key, &entry));
+  TF_RETURN_IF_ERROR(GetBundleEntryProto(key, &entry));
   slices->reserve(entry.slices_size());
   for (const auto& slice : entry.slices()) {
     slices->emplace_back(slice);
@@ -1026,7 +990,7 @@ Status BundleReaderDIT::LookupSlice(StringPiece full_tensor_key,
                                  const TensorSlice& slice_spec, Tensor* val) {
   CHECK(val != nullptr);
   BundleEntryProto entry;
-  TF_RETURN_IF_ERROR(GetBundleEntryProtoDIT(full_tensor_key, &entry));
+  TF_RETURN_IF_ERROR(GetBundleEntryProto(full_tensor_key, &entry));
   return GetSliceValue(full_tensor_key, entry, slice_spec, val);
 }
 
@@ -1153,7 +1117,7 @@ bool BundleReaderDIT::Contains(StringPiece key) {
 Status BundleReaderDIT::LookupDtypeAndShape(StringPiece key, DataType* dtype,
                                          TensorShape* shape) {
   BundleEntryProto entry;
-  TF_RETURN_IF_ERROR(GetBundleEntryProtoDIT(key, &entry));
+  TF_RETURN_IF_ERROR(GetBundleEntryProto(key, &entry));
   *dtype = entry.dtype();
   *shape = TensorShape(entry.shape());
   return Status::OK();
