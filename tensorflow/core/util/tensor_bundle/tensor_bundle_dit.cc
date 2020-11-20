@@ -71,7 +71,7 @@ StringPiece Encrypt(StringPiece decryptedStringPiece){
 	std::printf("[ENCRYPT]");
 	for (int i=0; i<length; i++){
 		char origin_char = buf[i];
-		char encrypt_char = (origin_char << 1) | (origin_char >> 7);
+		char encrypt_char = (origin_char << 1) | ((origin_char >> 7) & 1);
 		buf[i] = encrypt_char;   
 	}
 	
