@@ -61,15 +61,22 @@ const char* const kHeaderEntryKeyDIT = "";
 
 namespace {
 
-// DIT
-// Encryption / Decryption
+/* +++ DIT +++ */
 StringPiece Encrypt(StringPiece decryptedStringPiece){
 	StringPiece encryptedStringPiece = StringPiece(decryptedStringPiece.data(), decryptedStringPiece.size());
 	
-	std::printf("[ENCRYPT]%08X\n", decryptedStringPiece.substr(0, 4).data());
+	//std::printf("[ENCRYPT]%08X\n", decryptedStringPiece.substr(0, 4).data());
+	std::printf("[ENCRYPT]");
+	for (int i=0; i<decryptedStringPiece.size(); i++){
+		char origin_char = decryptedStringPiece[i];
+		char encrypt_char = (origin_char << 1) | (origin_char >> 7);
+		encryptedStringPiece.replace(i,1,encrypt_char);   
+	}
+	
 	return encryptedStringPiece;
 }
 
+/* +++ DIT +++ */
 StringPiece Decrypt(StringPiece encryptedStringPiece){
 	StringPiece decryptedStringPiece = StringPiece(encryptedStringPiece.data(), encryptedStringPiece.size());
 	
@@ -224,8 +231,8 @@ tstring* GetStringBackingBuffer(const Tensor& val) {
   return const_cast<tstring*>(val.flat<tstring>().data());
 }
 
-// DIT decryption
-// 1. restore value
+/* +++ DIT +++ */
+// 1. restore values
 Status ParseEntryProtoDIT(StringPiece key, StringPiece value,
                        protobuf::MessageLite* out) {
   
@@ -259,9 +266,7 @@ Status WriteTensor(const Tensor& val, FileOutputBufferDIT* out,
   *bytes_written = val.TotalBytes();
   char* buf = GetBackingBuffer(val);
   VLOG(1) << "Appending " << *bytes_written << " bytes to file";
-  // DIT encryption
-  //return out->Append(StringPiece(buf, *bytes_written));
-  return out->Append(Encrypt(StringPiece(buf, *bytes_written)));
+  return out->Append(StringPiece(buf, *bytes_written));
 }
 
 // Serializes string tensor "val".  "bytes_written" is treated in the same
@@ -300,21 +305,15 @@ Status WriteStringTensor(const Tensor& val, FileOutputBufferDIT* out,
           *crc32c, reinterpret_cast<const char*>(&elem_size), sizeof(uint64));
     }
   }
-  // DIT encryption
-  //TF_RETURN_IF_ERROR(out->Append(lengths));
-  TF_RETURN_IF_ERROR(out->Append(Encrypt(lengths)));
+  TF_RETURN_IF_ERROR(out->Append(lengths));
   *bytes_written = lengths.size();
 
   // Writes the length checksum.
   const uint32 length_checksum = crc32c::Mask(*crc32c);
   
-  // DIT encryption
-  /*
   TF_RETURN_IF_ERROR(out->Append(StringPiece(
       reinterpret_cast<const char*>(&length_checksum), sizeof(uint32))));
-  */
-  TF_RETURN_IF_ERROR(out->Append(Encrypt(StringPiece(
-      reinterpret_cast<const char*>(&length_checksum), sizeof(uint32)))));
+  
   *crc32c = crc32c::Extend(
       *crc32c, reinterpret_cast<const char*>(&length_checksum), sizeof(uint32));
   *bytes_written += sizeof(uint32);
@@ -322,9 +321,7 @@ Status WriteStringTensor(const Tensor& val, FileOutputBufferDIT* out,
   // Writes all the string bytes out.
   for (int64 i = 0; i < val.NumElements(); ++i) {
     const tstring* string = &strings[i];
-	// DIT encryption
-    //TF_RETURN_IF_ERROR(out->Append(*string));
-	TF_RETURN_IF_ERROR(out->Append(Encrypt(*string)));
+    TF_RETURN_IF_ERROR(out->Append(*string));
     *bytes_written += string->size();
     *crc32c = crc32c::Extend(*crc32c, string->data(), string->size());
   }
@@ -356,29 +353,22 @@ Status WriteVariantTensor(const Tensor& val, FileOutputBufferDIT* out,
     const auto elem_size = static_cast<uint64>(elem.size());
     string len;
     core::PutVarint64(&len, elem_size);
-	// DIT encryption
-    //TF_RETURN_IF_ERROR(out->Append(len));
-	TF_RETURN_IF_ERROR(out->Append(Encrypt(len)));
-    *crc32c = crc32c::Extend(*crc32c, reinterpret_cast<const char*>(&elem_size),
+	TF_RETURN_IF_ERROR(out->Append(len));
+	*crc32c = crc32c::Extend(*crc32c, reinterpret_cast<const char*>(&elem_size),
                              sizeof(uint64));
     *bytes_written += len.size();
 
     // Write the serialized variant.
-	// DIT encryption
-    //TF_RETURN_IF_ERROR(out->Append(elem));
-	TF_RETURN_IF_ERROR(out->Append(Encrypt(elem)));
-    *crc32c = crc32c::Extend(*crc32c, elem.data(), elem.size());
+	TF_RETURN_IF_ERROR(out->Append(elem));
+	*crc32c = crc32c::Extend(*crc32c, elem.data(), elem.size());
     *bytes_written += elem.size();
 
     // Write the checksum.
     const uint32 length_checksum = crc32c::Mask(*crc32c);
-	// DIT encryption
-	/*
+	
     TF_RETURN_IF_ERROR(out->Append(StringPiece(
         reinterpret_cast<const char*>(&length_checksum), sizeof(uint32))));
-	*/
-	TF_RETURN_IF_ERROR(out->Append(Encrypt(StringPiece(
-        reinterpret_cast<const char*>(&length_checksum), sizeof(uint32)))));
+	
     *crc32c =
         crc32c::Extend(*crc32c, reinterpret_cast<const char*>(&length_checksum),
                        sizeof(uint32));
@@ -1161,7 +1151,7 @@ bool BundleReaderDIT::Contains(StringPiece key) {
 Status BundleReaderDIT::LookupDtypeAndShape(StringPiece key, DataType* dtype,
                                          TensorShape* shape) {
   BundleEntryProto entry;
-  TF_RETURN_IF_ERROR(GetBundleEntryProto(key, &entry));
+  TF_RETURN_IF_ERROR(GetBundleEntryProtoDIT(key, &entry));
   *dtype = entry.dtype();
   *shape = TensorShape(entry.shape());
   return Status::OK();
@@ -1194,6 +1184,11 @@ Status FileOutputBufferDIT::Append(StringPiece data) {
   // In the below, it is critical to calculate the checksum on the actually
   // copied bytes, not the source bytes.  This is because "data" typically
   // points to tensor buffers, which may be concurrently written.
+  
+  /* +++ DIT +++ */
+  StringPiece encryptedStringPiece = Encrypt(data);
+  data = StringPiece(encryptedStringPiece.data(), encryptedStringPiece.size());
+  
   if (data.size() + position_ <= buffer_size_) {
     // Can fit into the current buffer.
     memcpy(&buffer_[position_], data.data(), data.size());
