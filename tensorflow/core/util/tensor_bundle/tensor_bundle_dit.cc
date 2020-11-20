@@ -814,7 +814,7 @@ BundleReaderDIT::BundleReaderDIT(Env* env, StringPiece prefix)
     return;
   }
   BundleHeaderProto header;
-  status_ = ParseEntryProtoDIT(iter_->key(), iter_->value(), &header);
+  status_ = ParseEntryProto(iter_->key(), iter_->value(), &header);
   if (!status_.ok()) {
     status_ = CorruptFileError(status_, filename, "unable to parse header");
     return;
@@ -1003,7 +1003,7 @@ Status BundleReaderDIT::Lookup(StringPiece key, Tensor* val) {
 Status BundleReaderDIT::ReadCurrent(Tensor* val) {
   CHECK(val != nullptr);
   BundleEntryProto entry;
-  TF_RETURN_IF_ERROR(ParseEntryProtoDIT(iter_->key(), iter_->value(), &entry));
+  TF_RETURN_IF_ERROR(ParseEntryProto(iter_->key(), iter_->value(), &entry));
   if (!TensorShape::IsValid(entry.shape())) {
     return errors::DataLoss("Invalid tensor shape: ", iter_->key(), " ",
                             entry.shape().ShortDebugString());
