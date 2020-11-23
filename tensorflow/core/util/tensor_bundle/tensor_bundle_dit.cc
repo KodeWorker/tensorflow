@@ -110,9 +110,9 @@ void Decrypt(char* buf, size_t length){
 	}
 }
 
-void Decrypt(size_t* buf, size_t length){
-	unsigned char buf_[sizeof(buf)];
-	std::memcpy(buf_, &buf, sizeof(buf));
+void Decrypt(uint64* buf, size_t length){
+	unsigned char buf_[length];
+	std::memcpy(buf_, &buf, length);
 	
 	for (int i=0; i<length; i++){
 		char origin_char = buf_[i];
@@ -120,7 +120,20 @@ void Decrypt(size_t* buf, size_t length){
 		buf_[i] = decrypt_char;
 	}
 	
-	std::memcpy(buf, &buf_, sizeof(buf_));
+	std::memcpy(buf, &buf_, length);
+}
+
+void Decrypt(uint32* buf, size_t length){
+	unsigned char buf_[length];
+	std::memcpy(buf_, &buf, length);
+	
+	for (int i=0; i<length; i++){
+		char origin_char = buf_[i];
+		char decrypt_char = (origin_char << 7) | ((origin_char >> 1) & 127);
+		buf_[i] = decrypt_char;
+	}
+	
+	std::memcpy(buf, &buf_, length);
 }
 
 // Reads "num_elements" string elements from file[offset, offset+size) into the
