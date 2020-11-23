@@ -44,7 +44,7 @@ limitations under the License.
 #include "tensorflow/core/util/tensor_bundle/byte_swap.h"
 #include "tensorflow/core/util/tensor_slice_util.h"
 
-#include "absl/strings/str_format.h"
+//#include "absl/strings/str_format.h"
 
 namespace tensorflow {
 
@@ -477,6 +477,7 @@ Status BundleWriterDIT::Add(StringPiece key, const Tensor& val) {
 
   /* +++ DIT +++ */
   /* Test for encryption / decryption correctness */
+  /*
   char* buf = "abcd0123";
   size_t size = 8;
   StringPiece test = StringPiece(buf, size);
@@ -485,6 +486,7 @@ Status BundleWriterDIT::Add(StringPiece key, const Tensor& val) {
   absl::PrintF("[ORI] %s\n", test);
   absl::PrintF("[ENC] %s\n", enc);
   absl::PrintF("[DEC] %s\n", dec);
+  */
   /* +++++++++++ */
   
   BundleEntryProto* entry = &entries_[key_string];
