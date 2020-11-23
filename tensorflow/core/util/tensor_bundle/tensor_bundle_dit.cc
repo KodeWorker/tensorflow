@@ -102,6 +102,14 @@ StringPiece Decrypt(StringPiece encryptedStringPiece){
 	return StringPiece(buf_, length);
 }
 
+void Decrypt(char* buf, size_t length){
+	for (int i=0; i<length; i++){
+		char origin_char = buf[i];
+		char decrypt_char = (origin_char << 7) | ((origin_char >> 1) & 127);
+		buf[i] = decrypt_char;
+	}
+}
+
 // Reads "num_elements" string elements from file[offset, offset+size) into the
 // length-N "destination".  Discards the original content of "destination".
 //
@@ -874,12 +882,13 @@ Status BundleReaderDIT::GetBundleEntryProto(StringPiece key,
   BundleEntryProto entry_copy;
   TF_RETURN_IF_ERROR(
       /* +++ DIT +++*/
-      ParseEntryProto(Decrypt(iter_->key()), Decrypt(iter_->value()), &entry_copy));
+      ParseEntryProto(iter_->key(), iter_->value(), &entry_copy));
   if (!TensorShape::IsValid(entry_copy.shape())) {
     return errors::DataLoss("Invalid tensor shape: ", key, " ",
                             entry_copy.shape().ShortDebugString());
   }
-
+  /* +++ DIT +++*/
+  
   *entry = entry_copy;
   return Status::OK();
 }
@@ -945,8 +954,7 @@ Status BundleReaderDIT::GetValue(const BundleEntryProto& entry, Tensor* val) {
                                                    &unused_bytes_read));
     }
 	/* +++ DIT +++ */
-	//StringPiece decryptedStringPiece = Decrypt(ret->tensor_data());
-	//backing_buffer = const_cast<char*>((decryptedStringPiece.data()));
+	Decrypt(backing_buffer, entry.size());
 	
     // Note that we compute the checksum *before* byte-swapping. The checksum
     // should be on the bytes in the order they appear in the file.
@@ -962,11 +970,17 @@ Status BundleReaderDIT::GetValue(const BundleEntryProto& entry, Tensor* val) {
           "the bundle contains a variant (arbitrary C++ type) tensor. "
           "Byte-swapping of variant tensors is not currently implemented.");
     }
+	/* +++ DIT +++*/
+	Decrypt(backing_buffer, entry.size());
+	
     // Relies on io::InputBuffer's buffering, because we issue many neighboring
     // reads for a single string tensor.
     TF_RETURN_IF_ERROR(ReadVariantTensor(buffered_file, ret, entry.offset(),
-                                         entry.size(), &actual_crc32c));
+                                         entry.size(), &actual_crc32c));	
   } else {
+	/* +++ DIT +++*/
+	Decrypt(backing_buffer, entry.size()); 
+	  
     // Relies on io::InputBuffer's buffering, because we issue many neighboring
     // reads for a single string tensor.
     TF_RETURN_IF_ERROR(ReadStringTensor(
@@ -979,7 +993,7 @@ Status BundleReaderDIT::GetValue(const BundleEntryProto& entry, Tensor* val) {
         strings::Printf("%08u", crc32c::Unmask(entry.crc32c())),
         " vs. calculated on the restored bytes ", actual_crc32c);
   }
-
+  
   *val = *ret;
   if (ret != val) delete ret;
   return Status::OK();
@@ -1040,6 +1054,9 @@ Status BundleReaderDIT::LookupSlice(StringPiece full_tensor_key,
 Status BundleReaderDIT::GetSliceValue(StringPiece full_tensor_key,
                                    const BundleEntryProto& full_tensor_entry,
                                    const TensorSlice& slice_spec, Tensor* val) {
+  /* +++ DIT +++ */
+  full_tensor_key = Decrypt(full_tensor_key);
+  
   using checkpoint::RegisterTensorSlice;
   using checkpoint::TensorSliceSet;
   DCHECK_GE(full_tensor_entry.slices_size(), 0);
