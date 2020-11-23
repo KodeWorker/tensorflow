@@ -477,9 +477,9 @@ Status BundleWriterDIT::Add(StringPiece key, const Tensor& val) {
   char* buf = "abcd0123";
   size_t size = 8;
   StringPiece test = StringPiece(buf, size);
-  std::printf("%s\n", test.c_str());
-  std::printf("%s\n", Encrypt(test).c_str());
-  std::printf("%s\n", Decrypt(Encrypt(test)).c_str());
+  std::printf("%s\n", test.data());
+  std::printf("%s\n", Encrypt(test).data());
+  std::printf("%s\n", Decrypt(Encrypt(test)).data());
 
   BundleEntryProto* entry = &entries_[key_string];
   entry->set_dtype(val.dtype());
