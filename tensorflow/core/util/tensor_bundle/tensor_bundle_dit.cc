@@ -111,7 +111,8 @@ void Decrypt(char* buf, size_t length){
 }
 
 void Decrypt(uint64* buf, size_t size){
-	char* buf_= new char[size/sizeof(char)]();
+	size_t length = size/sizeof(char);
+	char* buf_= new char[length]();
 	std::memcpy(buf_, &buf, length);
 	
 	for (int i=0; i<length; i++){
@@ -124,7 +125,8 @@ void Decrypt(uint64* buf, size_t size){
 }
 
 void Decrypt(uint32* buf, size_t size){
-	char* buf_= new char[size/sizeof(char)]();
+	size_t length = size/sizeof(char);
+	char* buf_= new char[length]();
 	std::memcpy(buf_, &buf, length);
 	
 	for (int i=0; i<length; i++){
