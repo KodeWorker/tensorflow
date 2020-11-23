@@ -474,14 +474,15 @@ Status BundleWriterDIT::Add(StringPiece key, const Tensor& val) {
   }
 
   /* +++ DIT +++ */
+  /* Test for encryption / decryption correctness */
   char* buf = "abcd0123";
   size_t size = 8;
   StringPiece test = StringPiece(buf, size);
   StringPiece enc = Encrypt(test);
   StringPiece dec = Decrypt(enc);
-  std::printf("[ORI] %.*s\n", int(test.length()), test.data());
-  std::printf("[ENC] %.*s\n", int(enc.length()), enc.data());
-  std::printf("[DEC] %.*s\n", int(dec.length()), dec.data());
+  std::printf("[ORI] %s\n", test.data());
+  std::printf("[ENC] %s\n", enc.data());
+  std::printf("[DEC] %s\n", dec.data());
   /* +++++++++++ */
   
   BundleEntryProto* entry = &entries_[key_string];
