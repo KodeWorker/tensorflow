@@ -251,9 +251,7 @@ tstring* GetStringBackingBuffer(const Tensor& val) {
 
 Status ParseEntryProto(StringPiece key, StringPiece value,
                        protobuf::MessageLite* out) {
-  /* +++ DIT +++*/
-  key = Decrypt(key);
-  value = Decrypt(value);
+    
   if (!out->ParseFromArray(value.data(), value.size())) {
     return errors::DataLoss("Entry for key ", key, " not parseable.");
   }
@@ -825,6 +823,10 @@ BundleReaderDIT::BundleReaderDIT(Env* env, StringPiece prefix)
     return;
   }
   BundleHeaderProto header;
+  
+  /* +++ DIT +++ */
+  absl::PrintF("*** [%s]%s\n", iter_->key(), iter_->value());
+  
   status_ = ParseEntryProto(iter_->key(), iter_->value(), &header);
   if (!status_.ok()) {
     status_ = CorruptFileError(status_, filename, "unable to parse header");
