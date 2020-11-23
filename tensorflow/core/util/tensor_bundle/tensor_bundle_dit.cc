@@ -70,34 +70,37 @@ int nTotalReadLenght = 0;
 StringPiece Encrypt(StringPiece decryptedStringPiece){
 	
 	char* buf = const_cast<char*>(decryptedStringPiece.data());
-	int length = decryptedStringPiece.size();
+	size_t length = decryptedStringPiece.size();
+	char * buf_ = new char[length]();
 	
-	nTotalWriteLenght += length;
+	
+	//nTotalWriteLenght += length;
 	//std::printf("[ENCRYPT]%d\n", nTotalWriteLenght);
 	for (int i=0; i<length; i++){
 		char origin_char = buf[i];
 		char encrypt_char = (origin_char << 1) | ((origin_char >> 7) & 1);
-		buf[i] = encrypt_char;   
+		buf_[i] = encrypt_char;   
 	}
 	
-	return StringPiece(buf, length);
+	return StringPiece(buf_, length);
 }
 
 /* +++ DIT +++ */
 StringPiece Decrypt(StringPiece encryptedStringPiece){
 	
 	char* buf = const_cast<char*>(encryptedStringPiece.data());
-	int length = encryptedStringPiece.size();
+	size_t length = encryptedStringPiece.size();
+	char * buf_ = new char[length]();
 	
-	nTotalReadLenght += length;
+	//nTotalReadLenght += length;
 	//std::printf("[DECRYPT]%d\n", nTotalReadLenght);
 	for (int i=0; i<length; i++){
 		char origin_char = buf[i];
 		char decrypt_char = (origin_char << 7) | ((origin_char >> 1) & 127);
-		buf[i] = decrypt_char;
+		buf_[i] = decrypt_char;
 	}
 	
-	return StringPiece(buf, length);
+	return StringPiece(buf_, length);
 }
 
 // Reads "num_elements" string elements from file[offset, offset+size) into the
@@ -477,7 +480,7 @@ Status BundleWriterDIT::Add(StringPiece key, const Tensor& val) {
 
   /* +++ DIT +++ */
   /* Test for encryption / decryption correctness */
-  /*
+  
   char* buf = "abcd0123";
   size_t size = 8;
   StringPiece test = StringPiece(buf, size);
@@ -486,7 +489,7 @@ Status BundleWriterDIT::Add(StringPiece key, const Tensor& val) {
   absl::PrintF("[ORI] %s\n", test);
   absl::PrintF("[ENC] %s\n", enc);
   absl::PrintF("[DEC] %s\n", dec);
-  */
+  
   /* +++++++++++ */
   
   BundleEntryProto* entry = &entries_[key_string];
