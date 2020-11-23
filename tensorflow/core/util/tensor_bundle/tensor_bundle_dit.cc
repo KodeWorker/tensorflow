@@ -86,11 +86,12 @@ StringPiece Decrypt(StringPiece encryptedStringPiece){
 	
 	char* buf = const_cast<char*>(encryptedStringPiece.data());
 	int length = encryptedStringPiece.size();
+	
 	nTotalReadLenght += length;
 	std::printf("[DECRYPT]%d\n", nTotalReadLenght);
 	for (int i=0; i<length; i++){
 		char origin_char = buf[i];
-		char decrypt_char = (origin_char << 7) | ((origin_char >> 1) & (128-1));
+		char decrypt_char = (origin_char << 7) | ((origin_char >> 1) & 127);
 		buf[i] = decrypt_char;
 	}
 	
@@ -265,7 +266,7 @@ Status WriteTensor(const Tensor& val, FileOutputBufferDIT* out,
   char* buf = GetBackingBuffer(val);
   VLOG(1) << "Appending " << *bytes_written << " bytes to file";
   /* +++ DIT +++ */
-  return out->Append(Encrypt(StringPiece(buf, *bytes_written)));
+  return out->Append(StringPiece(buf, *bytes_written));
 }
 
 // Serializes string tensor "val".  "bytes_written" is treated in the same
@@ -471,6 +472,14 @@ Status BundleWriterDIT::Add(StringPiece key, const Tensor& val) {
     status_ = errors::InvalidArgument("Adding duplicate key: ", key);
     return status_;
   }
+
+  /* +++ DIT +++ */
+  char* buf = "abcd0123";
+  size_t size = 8;
+  StringPiece test = StringPiece(buf, size);
+  std::printf("%s\n", test);
+  std::printf("%s\n", Encrypt(test));
+  std::printf("%s\n", Decrypt(Encrypt(test)));
 
   BundleEntryProto* entry = &entries_[key_string];
   entry->set_dtype(val.dtype());
@@ -921,8 +930,8 @@ Status BundleReaderDIT::GetValue(const BundleEntryProto& entry, Tensor* val) {
                                                    &unused_bytes_read));
     }
 	/* +++ DIT +++ */
-	StringPiece decryptedStringPiece = Decrypt(ret->tensor_data());
-	backing_buffer = const_cast<char*>((decryptedStringPiece.data()));
+	//StringPiece decryptedStringPiece = Decrypt(ret->tensor_data());
+	//backing_buffer = const_cast<char*>((decryptedStringPiece.data()));
 	
     // Note that we compute the checksum *before* byte-swapping. The checksum
     // should be on the bytes in the order they appear in the file.
