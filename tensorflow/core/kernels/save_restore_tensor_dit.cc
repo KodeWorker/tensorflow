@@ -182,7 +182,10 @@ struct RestoreDITOp {
       TensorShape parsed_full_shape;
       TensorSlice parsed_slice;
       TensorShape parsed_slice_shape;
-
+	  
+	  /* +++ DIT +++*/
+	  std::printf("[shape_and_slice]%s\n", shape_and_slice);
+	  
       TF_RETURN_IF_ERROR(
           checkpoint::ParseShapeAndSlice(shape_and_slice, &parsed_full_shape,
                                          &parsed_slice, &parsed_slice_shape));
