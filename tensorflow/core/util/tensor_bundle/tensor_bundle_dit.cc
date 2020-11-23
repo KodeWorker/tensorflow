@@ -73,7 +73,6 @@ StringPiece Encrypt(StringPiece decryptedStringPiece){
 	size_t length = decryptedStringPiece.size();
 	char * buf_ = new char[length]();
 	
-	
 	//nTotalWriteLenght += length;
 	//std::printf("[ENCRYPT]%d\n", nTotalWriteLenght);
 	for (int i=0; i<length; i++){
@@ -252,7 +251,9 @@ tstring* GetStringBackingBuffer(const Tensor& val) {
 
 Status ParseEntryProto(StringPiece key, StringPiece value,
                        protobuf::MessageLite* out) {
-  
+  /* +++ DIT +++*/
+  key = Decrypt(key);
+  value = Decrypt(value);
   if (!out->ParseFromArray(value.data(), value.size())) {
     return errors::DataLoss("Entry for key ", key, " not parseable.");
   }
@@ -472,7 +473,10 @@ BundleWriterDIT::BundleWriterDIT(Env* env, StringPiece prefix, const Options& op
 Status BundleWriterDIT::Add(StringPiece key, const Tensor& val) {
   if (!status_.ok()) return status_;
   CHECK_NE(key, kHeaderEntryKeyDIT);
-  const string key_string(key);
+  /* +++ DIT +++*/
+  const string key_string(Encrypt(key));
+  //const string key_string(key);
+  
   if (entries_.find(key_string) != entries_.end()) {
     status_ = errors::InvalidArgument("Adding duplicate key: ", key);
     return status_;
@@ -480,7 +484,7 @@ Status BundleWriterDIT::Add(StringPiece key, const Tensor& val) {
 
   /* +++ DIT +++ */
   /* Test for encryption / decryption correctness */
-  
+  /*
   char* buf = "abcd0123";
   size_t size = 8;
   StringPiece test = StringPiece(buf, size);
@@ -489,7 +493,7 @@ Status BundleWriterDIT::Add(StringPiece key, const Tensor& val) {
   absl::PrintF("[ORI] %s\n", test);
   absl::PrintF("[ENC] %s\n", enc);
   absl::PrintF("[DEC] %s\n", dec);
-  
+  */
   /* +++++++++++ */
   
   BundleEntryProto* entry = &entries_[key_string];
@@ -1189,6 +1193,9 @@ Status FileOutputBufferDIT::Append(StringPiece data) {
   // In the below, it is critical to calculate the checksum on the actually
   // copied bytes, not the source bytes.  This is because "data" typically
   // points to tensor buffers, which may be concurrently written.
+  
+  /* +++ DIT +++*/
+  data = Encrypt(data);
   
   if (data.size() + position_ <= buffer_size_) {
     // Can fit into the current buffer.
