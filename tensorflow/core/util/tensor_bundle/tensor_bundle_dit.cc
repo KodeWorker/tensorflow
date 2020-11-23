@@ -568,9 +568,6 @@ Status BundleWriterDIT::AddSlice(StringPiece full_tensor_key,
 // TODO(zongheng): on metadata write failure or !status_.ok(), consider removing
 // the orphaned data file.
 
-/* +++ DIT +++ */
-// 1. *.index (metadata)
-// 2. key encryption ---> see Writer::Add
 Status BundleWriterDIT::Finish() {
 
   if (out_) {
@@ -865,6 +862,9 @@ BundleReaderDIT::~BundleReaderDIT() {
 
 Status BundleReaderDIT::GetBundleEntryProto(StringPiece key,
                                          BundleEntryProto* entry) {
+  /* +++ DIT +++*/
+  key = Encrypt(key);
+  
   entry->Clear();
   TF_CHECK_OK(status_);
   Seek(key);

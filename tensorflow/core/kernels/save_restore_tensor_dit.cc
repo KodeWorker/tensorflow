@@ -165,7 +165,6 @@ struct RestoreDITOp {
   }
 
   Status run(BundleReaderDIT* reader) {
-	std::printf("[RUN]%s\n", tensor_name);
     TensorShape restored_full_shape;
     TF_RETURN_IF_ERROR(
         reader->LookupTensorShape(tensor_name, &restored_full_shape));
