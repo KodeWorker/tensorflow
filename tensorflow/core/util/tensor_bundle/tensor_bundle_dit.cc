@@ -71,7 +71,7 @@ StringPiece Encrypt(StringPiece decryptedStringPiece){
 	int length = decryptedStringPiece.size();
 	
 	nTotalWriteLenght += length;
-	std::printf("[ENCRYPT]%d\n", nTotalWriteLenght);
+	//std::printf("[ENCRYPT]%d\n", nTotalWriteLenght);
 	for (int i=0; i<length; i++){
 		char origin_char = buf[i];
 		char encrypt_char = (origin_char << 1) | ((origin_char >> 7) & 1);
@@ -88,7 +88,7 @@ StringPiece Decrypt(StringPiece encryptedStringPiece){
 	int length = encryptedStringPiece.size();
 	
 	nTotalReadLenght += length;
-	std::printf("[DECRYPT]%d\n", nTotalReadLenght);
+	//std::printf("[DECRYPT]%d\n", nTotalReadLenght);
 	for (int i=0; i<length; i++){
 		char origin_char = buf[i];
 		char decrypt_char = (origin_char << 7) | ((origin_char >> 1) & 127);
