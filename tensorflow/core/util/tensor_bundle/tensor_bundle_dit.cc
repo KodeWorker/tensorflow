@@ -110,6 +110,19 @@ void Decrypt(char* buf, size_t length){
 	}
 }
 
+void Decrypt(uint64* buf, size_t length){
+	unsigned char buf_[sizeof(buf)];
+	std::memcpy(buf_, &buf, sizeof(buf));
+	
+	for (int i=0; i<length; i++){
+		char origin_char = buf_[i];
+		char decrypt_char = (origin_char << 7) | ((origin_char >> 1) & 127);
+		buf_[i] = decrypt_char;
+	}
+	
+	std::memcpy(buf, &buf_, sizeof(buf_));
+}
+
 // Reads "num_elements" string elements from file[offset, offset+size) into the
 // length-N "destination".  Discards the original content of "destination".
 //
@@ -127,7 +140,7 @@ Status ReadStringTensor(io::InputBuffer* buffered_file, size_t num_elements,
   for (size_t i = 0; i < num_elements; ++i) {
     TF_RETURN_IF_ERROR(buffered_file->ReadVarint64(&string_lengths[i]));
     /* +++ DIT +++ */
-	Decrypt(&string_lengths[i], sizeof(uint64));
+	Decrypt(&string_lengths[i], sizeof(uint64)/sizeof(uint8));
 	
 	if (string_lengths[i] <= UINT32_MAX) {
       // We need to do this because older checkpoints only used uint32s and we
@@ -212,7 +225,7 @@ Status ReadVariantTensor(io::InputBuffer* buffered_file, Tensor* ret,
     uint64 string_length = 0;
     TF_RETURN_IF_ERROR(buffered_file->ReadVarint64(&string_length));
 	/* +++ DIT +++ */
-	Decrypt(&string_length, sizeof(uint64));
+	Decrypt(&string_length, sizeof(uint64)/sizeof(uint8));
 	
     *actual_crc32c = crc32c::Extend(
         *actual_crc32c, reinterpret_cast<const char*>(&string_length),
