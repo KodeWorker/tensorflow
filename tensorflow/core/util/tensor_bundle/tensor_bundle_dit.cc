@@ -265,7 +265,6 @@ Status WriteTensor(const Tensor& val, FileOutputBufferDIT* out,
   *bytes_written = val.TotalBytes();
   char* buf = GetBackingBuffer(val);
   VLOG(1) << "Appending " << *bytes_written << " bytes to file";
-  /* +++ DIT +++ */
   return out->Append(StringPiece(buf, *bytes_written));
 }
 
@@ -478,9 +477,11 @@ Status BundleWriterDIT::Add(StringPiece key, const Tensor& val) {
   char* buf = "abcd0123";
   size_t size = 8;
   StringPiece test = StringPiece(buf, size);
-  std::printf("%02x%02x%02x%02x%02x%02x%02x%02x\n", test.data());
-  std::printf("%02x%02x%02x%02x%02x%02x%02x%02x\n", Encrypt(test).data());
-  std::printf("%02x%02x%02x%02x%02x%02x%02x%02x\n", Decrypt(Encrypt(test)).data());
+  StringPiece enc = Encrypt(test);
+  StringPiece dec = Decrypt(enc);
+  absl::PrintF("%s\n", test);
+  absl::PrintF("%s\n", enc);
+  absl::PrintF("%s\n", dec);
   /* +++++++++++ */
   
   BundleEntryProto* entry = &entries_[key_string];
