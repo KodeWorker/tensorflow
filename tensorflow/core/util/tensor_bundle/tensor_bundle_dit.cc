@@ -1028,9 +1028,10 @@ Status BundleReaderDIT::GetValue(const BundleEntryProto& entry, Tensor* val) {
 	
   }
   /* +++ DIT +++*/
-  Decrypt(&(entry.crc32c()), sizeof(uint32)/sizeof(uint8));
+  uint32 crc32c_ = entry.crc32c();
+  Decrypt(&crc32c_, sizeof(uint32)/sizeof(uint8));
   
-  if (crc32c::Unmask(entry.crc32c()) != actual_crc32c) {
+  if (crc32c::Unmask(crc32c_) != actual_crc32c) {
   //if (crc32c::Unmask(entry.crc32c()) != actual_crc32c) {
     return errors::DataLoss(
         "Checksum does not match: stored ",
