@@ -126,7 +126,10 @@ Status ReadStringTensor(io::InputBuffer* buffered_file, size_t num_elements,
   std::vector<uint64> string_lengths(num_elements);
   for (size_t i = 0; i < num_elements; ++i) {
     TF_RETURN_IF_ERROR(buffered_file->ReadVarint64(&string_lengths[i]));
-    if (string_lengths[i] <= UINT32_MAX) {
+    /* +++ DIT +++ */
+	Decrypt(&string_lengths[i], sizeof(uint64));
+	
+	if (string_lengths[i] <= UINT32_MAX) {
       // We need to do this because older checkpoints only used uint32s and we
       // should still support them.
       uint32 elem_size_uint32 = static_cast<uint32>(string_lengths[i]);
@@ -159,6 +162,9 @@ Status ReadStringTensor(io::InputBuffer* buffered_file, size_t num_elements,
   TF_RETURN_IF_ERROR(buffered_file->ReadNBytes(
       sizeof(uint32), reinterpret_cast<char*>(&raw_length_checksum),
       &unused_bytes_read));
+  /* +++ DIT +++ */
+  Decrypt(reinterpret_cast<char*>(&raw_length_checksum), sizeof(uint32));
+	
   length_checksum = need_to_swap_bytes ? BYTE_SWAP_32(raw_length_checksum)
                                        : raw_length_checksum;
   if (crc32c::Unmask(length_checksum) != *actual_crc32c) {
@@ -180,6 +186,9 @@ Status ReadStringTensor(io::InputBuffer* buffered_file, size_t num_elements,
     size_t bytes_read = 0;
     TF_RETURN_IF_ERROR(
         buffered_file->ReadNBytes(string_length, &(*buffer)[0], &bytes_read));
+	/* +++ DIT +++ */
+	Decrypt(&(*buffer)[0], string_length);
+	
     *actual_crc32c = crc32c::Extend(*actual_crc32c, buffer->data(), bytes_read);
   }
   return Status::OK();
@@ -202,6 +211,9 @@ Status ReadVariantTensor(io::InputBuffer* buffered_file, Tensor* ret,
     // Read the serialized variant length.
     uint64 string_length = 0;
     TF_RETURN_IF_ERROR(buffered_file->ReadVarint64(&string_length));
+	/* +++ DIT +++ */
+	Decrypt(&string_length, sizeof(uint64));
+	
     *actual_crc32c = crc32c::Extend(
         *actual_crc32c, reinterpret_cast<const char*>(&string_length),
         sizeof(uint64));
@@ -211,6 +223,9 @@ Status ReadVariantTensor(io::InputBuffer* buffered_file, Tensor* ret,
     size_t bytes_read = 0;
     TF_RETURN_IF_ERROR(
         buffered_file->ReadNBytes(string_length, &buffer[0], &bytes_read));
+    /* +++ DIT +++ */
+	Decrypt(&buffer[0], string_length);
+	
     *actual_crc32c = crc32c::Extend(*actual_crc32c, buffer.data(), bytes_read);
     VariantTensorDataProto proto;
     if (!proto.ParseFromString(buffer)) {
@@ -232,6 +247,9 @@ Status ReadVariantTensor(io::InputBuffer* buffered_file, Tensor* ret,
     TF_RETURN_IF_ERROR(buffered_file->ReadNBytes(
         sizeof(uint32), reinterpret_cast<char*>(&checksum),
         &unused_bytes_read));
+	/* +++ DIT +++ */
+	Decrypt(reinterpret_cast<char*>(&checksum), sizeof(uint32));
+	
     if (crc32c::Unmask(checksum) != *actual_crc32c) {
       return errors::DataLoss(
           "The checksum after Variant ", i, " does not match.",
@@ -887,7 +905,6 @@ Status BundleReaderDIT::GetBundleEntryProto(StringPiece key,
     return errors::DataLoss("Invalid tensor shape: ", key, " ",
                             entry_copy.shape().ShortDebugString());
   }
-  /* +++ DIT +++*/
   
   *entry = entry_copy;
   return Status::OK();
@@ -954,8 +971,7 @@ Status BundleReaderDIT::GetValue(const BundleEntryProto& entry, Tensor* val) {
                                                    &unused_bytes_read));
     }
 	/* +++ DIT +++ */
-	size_t length = ret->tensor_data().size();
-	Decrypt(backing_buffer, length);
+	Decrypt(backing_buffer, entry.size());
 	
     // Note that we compute the checksum *before* byte-swapping. The checksum
     // should be on the bytes in the order they appear in the file.
@@ -976,11 +992,6 @@ Status BundleReaderDIT::GetValue(const BundleEntryProto& entry, Tensor* val) {
     TF_RETURN_IF_ERROR(ReadVariantTensor(buffered_file, ret, entry.offset(),
                                          entry.size(), &actual_crc32c));
 	
-	/* +++ DIT +++*/
-	char* backing_buffer = const_cast<char*>((ret->tensor_data().data()));
-	size_t length = ret->tensor_data().size();
-	Decrypt(backing_buffer, length);
-	
   } else {
 	
     // Relies on io::InputBuffer's buffering, because we issue many neighboring
@@ -989,10 +1000,6 @@ Status BundleReaderDIT::GetValue(const BundleEntryProto& entry, Tensor* val) {
         buffered_file, ret->NumElements(), entry.offset(), entry.size(),
         GetStringBackingBuffer(*ret), &actual_crc32c, need_to_swap_bytes_));
 	
-	/* +++ DIT +++*/
-	char* backing_buffer = const_cast<char*>((ret->tensor_data().data()));
-	size_t length = ret->tensor_data().size();
-	Decrypt(backing_buffer, length);
   }
   if (crc32c::Unmask(entry.crc32c()) != actual_crc32c) {
     return errors::DataLoss(
