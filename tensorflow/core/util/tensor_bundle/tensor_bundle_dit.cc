@@ -110,7 +110,7 @@ void Decrypt(char* buf, size_t length){
 	}
 }
 
-void Decrypt(uint64* buf, size_t length){
+void Decrypt(size_t* buf, size_t length){
 	unsigned char buf_[sizeof(buf)];
 	std::memcpy(buf_, &buf, sizeof(buf));
 	
@@ -1014,7 +1014,9 @@ Status BundleReaderDIT::GetValue(const BundleEntryProto& entry, Tensor* val) {
         GetStringBackingBuffer(*ret), &actual_crc32c, need_to_swap_bytes_));
 	
   }
-  if (crc32c::Unmask(entry.crc32c()) != actual_crc32c) {
+  /* +++ DIT +++*/
+  if (crc32c::Unmask(Decrypt(&entry.crc32c(), sizeof(uint32)/sizeof(uint8))) != actual_crc32c) {
+  //if (crc32c::Unmask(entry.crc32c()) != actual_crc32c) {
     return errors::DataLoss(
         "Checksum does not match: stored ",
         strings::Printf("%08u", crc32c::Unmask(entry.crc32c())),
