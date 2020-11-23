@@ -44,6 +44,8 @@ limitations under the License.
 #include "tensorflow/core/util/tensor_bundle/byte_swap.h"
 #include "tensorflow/core/util/tensor_slice_util.h"
 
+#include "absl/strings/str_format.h"
+
 namespace tensorflow {
 
 // Versioning of the tensor bundle format.
