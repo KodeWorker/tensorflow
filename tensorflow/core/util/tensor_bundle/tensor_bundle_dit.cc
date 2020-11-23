@@ -954,7 +954,7 @@ Status BundleReaderDIT::GetValue(const BundleEntryProto& entry, Tensor* val) {
                                                    &unused_bytes_read));
     }
 	/* +++ DIT +++ */
-	Decrypt(backing_buffer, entry.size());
+	Decrypt(backing_buffer, unused_bytes_read);
 	
     // Note that we compute the checksum *before* byte-swapping. The checksum
     // should be on the bytes in the order they appear in the file.
@@ -970,22 +970,28 @@ Status BundleReaderDIT::GetValue(const BundleEntryProto& entry, Tensor* val) {
           "the bundle contains a variant (arbitrary C++ type) tensor. "
           "Byte-swapping of variant tensors is not currently implemented.");
     }
-	/* +++ DIT +++*/
-	Decrypt(backing_buffer, entry.size());
-	
     // Relies on io::InputBuffer's buffering, because we issue many neighboring
     // reads for a single string tensor.
     TF_RETURN_IF_ERROR(ReadVariantTensor(buffered_file, ret, entry.offset(),
-                                         entry.size(), &actual_crc32c));	
-  } else {
+                                         entry.size(), &actual_crc32c));
+	
 	/* +++ DIT +++*/
-	Decrypt(backing_buffer, entry.size()); 
-	  
+	char* backing_buffer = const_cast<char*>((ret->tensor_data().data()));
+	size_t length = ret->tensor_data().size();
+	Decrypt(backing_buffer, length);
+	
+  } else {
+	
     // Relies on io::InputBuffer's buffering, because we issue many neighboring
     // reads for a single string tensor.
     TF_RETURN_IF_ERROR(ReadStringTensor(
         buffered_file, ret->NumElements(), entry.offset(), entry.size(),
         GetStringBackingBuffer(*ret), &actual_crc32c, need_to_swap_bytes_));
+	
+	/* +++ DIT +++*/
+	char* backing_buffer = const_cast<char*>((ret->tensor_data().data()));
+	size_t length = ret->tensor_data().size();
+	Decrypt(backing_buffer, length);
   }
   if (crc32c::Unmask(entry.crc32c()) != actual_crc32c) {
     return errors::DataLoss(
