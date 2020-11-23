@@ -463,6 +463,7 @@ BundleWriterDIT::BundleWriterDIT(Env* env, StringPiece prefix, const Options& op
   VLOG(1) << "Writing to file " << tmp_data_path_;
 }
 
+/* +++ DIT +++ */
 // key_string encrypt
 Status BundleWriterDIT::Add(StringPiece key, const Tensor& val) {
   if (!status_.ok()) return status_;
@@ -477,10 +478,11 @@ Status BundleWriterDIT::Add(StringPiece key, const Tensor& val) {
   char* buf = "abcd0123";
   size_t size = 8;
   StringPiece test = StringPiece(buf, size);
-  std::printf("%s\n", test.data());
-  std::printf("%s\n", Encrypt(test).data());
-  std::printf("%s\n", Decrypt(Encrypt(test)).data());
-
+  std::printf("%02x%02x%02x%02x%02x%02x%02x%02x\n", test.data());
+  std::printf("%02x%02x%02x%02x%02x%02x%02x%02x\n", Encrypt(test).data());
+  std::printf("%02x%02x%02x%02x%02x%02x%02x%02x\n", Decrypt(Encrypt(test)).data());
+  /* +++++++++++ */
+  
   BundleEntryProto* entry = &entries_[key_string];
   entry->set_dtype(val.dtype());
   val.shape().AsProto(entry->mutable_shape());
