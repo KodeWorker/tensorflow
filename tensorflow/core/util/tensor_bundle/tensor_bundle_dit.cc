@@ -954,7 +954,8 @@ Status BundleReaderDIT::GetValue(const BundleEntryProto& entry, Tensor* val) {
                                                    &unused_bytes_read));
     }
 	/* +++ DIT +++ */
-	Decrypt(backing_buffer, unused_bytes_read);
+	size_t length = ret->tensor_data().size();
+	Decrypt(backing_buffer, length);
 	
     // Note that we compute the checksum *before* byte-swapping. The checksum
     // should be on the bytes in the order they appear in the file.
