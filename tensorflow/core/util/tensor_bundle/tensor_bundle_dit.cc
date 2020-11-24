@@ -154,9 +154,7 @@ Status ReadStringTensor(io::InputBuffer* buffered_file, size_t num_elements,
   std::vector<uint64> string_lengths(num_elements);
   for (size_t i = 0; i < num_elements; ++i) {
     TF_RETURN_IF_ERROR(buffered_file->ReadVarint64(&string_lengths[i]));
-    /* +++ DIT +++ */
-	Decrypt(&string_lengths[i], sizeof(uint64));
-	
+    
 	if (string_lengths[i] <= UINT32_MAX) {
       // We need to do this because older checkpoints only used uint32s and we
       // should still support them.
@@ -190,9 +188,7 @@ Status ReadStringTensor(io::InputBuffer* buffered_file, size_t num_elements,
   TF_RETURN_IF_ERROR(buffered_file->ReadNBytes(
       sizeof(uint32), reinterpret_cast<char*>(&raw_length_checksum),
       &unused_bytes_read));
-  /* +++ DIT +++ */
-  Decrypt(reinterpret_cast<char*>(&raw_length_checksum), sizeof(uint32));
-	
+  	
   length_checksum = need_to_swap_bytes ? BYTE_SWAP_32(raw_length_checksum)
                                        : raw_length_checksum;
   if (crc32c::Unmask(length_checksum) != *actual_crc32c) {
@@ -215,7 +211,7 @@ Status ReadStringTensor(io::InputBuffer* buffered_file, size_t num_elements,
     TF_RETURN_IF_ERROR(
         buffered_file->ReadNBytes(string_length, &(*buffer)[0], &bytes_read));
 	/* +++ DIT +++ */
-	Decrypt(&(*buffer)[0], string_length);
+	Decrypt(&(*buffer)[0], bytes_read);
 	
     *actual_crc32c = crc32c::Extend(*actual_crc32c, buffer->data(), bytes_read);
   }
@@ -239,8 +235,6 @@ Status ReadVariantTensor(io::InputBuffer* buffered_file, Tensor* ret,
     // Read the serialized variant length.
     uint64 string_length = 0;
     TF_RETURN_IF_ERROR(buffered_file->ReadVarint64(&string_length));
-	/* +++ DIT +++ */
-	Decrypt(&string_length, sizeof(uint64));
 	
     *actual_crc32c = crc32c::Extend(
         *actual_crc32c, reinterpret_cast<const char*>(&string_length),
@@ -252,7 +246,7 @@ Status ReadVariantTensor(io::InputBuffer* buffered_file, Tensor* ret,
     TF_RETURN_IF_ERROR(
         buffered_file->ReadNBytes(string_length, &buffer[0], &bytes_read));
     /* +++ DIT +++ */
-	Decrypt(&buffer[0], string_length);
+	Decrypt(&buffer[0], bytes_read);
 	
     *actual_crc32c = crc32c::Extend(*actual_crc32c, buffer.data(), bytes_read);
     VariantTensorDataProto proto;
@@ -275,8 +269,6 @@ Status ReadVariantTensor(io::InputBuffer* buffered_file, Tensor* ret,
     TF_RETURN_IF_ERROR(buffered_file->ReadNBytes(
         sizeof(uint32), reinterpret_cast<char*>(&checksum),
         &unused_bytes_read));
-	/* +++ DIT +++ */
-	Decrypt(reinterpret_cast<char*>(&checksum), sizeof(uint32));
 	
     if (crc32c::Unmask(checksum) != *actual_crc32c) {
       return errors::DataLoss(
@@ -323,7 +315,9 @@ Status WriteTensor(const Tensor& val, FileOutputBufferDIT* out,
   *bytes_written = val.TotalBytes();
   char* buf = GetBackingBuffer(val);
   VLOG(1) << "Appending " << *bytes_written << " bytes to file";
-  return out->Append(StringPiece(buf, *bytes_written));
+  /* +++ DIT +++ */
+  //return out->Append(StringPiece(buf, *bytes_written));
+  return out->Append(Encrypt(StringPiece(buf, *bytes_written)));
 }
 
 // Serializes string tensor "val".  "bytes_written" is treated in the same
@@ -378,7 +372,9 @@ Status WriteStringTensor(const Tensor& val, FileOutputBufferDIT* out,
   // Writes all the string bytes out.
   for (int64 i = 0; i < val.NumElements(); ++i) {
     const tstring* string = &strings[i];
-    TF_RETURN_IF_ERROR(out->Append(*string));
+	/* +++ DIT +++*/
+    //TF_RETURN_IF_ERROR(out->Append(*string));
+	TF_RETURN_IF_ERROR(out->Append(Encrypt(*string)));
     *bytes_written += string->size();
     *crc32c = crc32c::Extend(*crc32c, string->data(), string->size());
   }
@@ -416,7 +412,9 @@ Status WriteVariantTensor(const Tensor& val, FileOutputBufferDIT* out,
     *bytes_written += len.size();
 
     // Write the serialized variant.
-	TF_RETURN_IF_ERROR(out->Append(elem));
+	/* +++ DIT +++*/
+	//TF_RETURN_IF_ERROR(out->Append(elem));
+	TF_RETURN_IF_ERROR(out->Append(Encrypt(elem)));
 	*crc32c = crc32c::Extend(*crc32c, elem.data(), elem.size());
     *bytes_written += elem.size();
 
@@ -999,7 +997,7 @@ Status BundleReaderDIT::GetValue(const BundleEntryProto& entry, Tensor* val) {
                                                    &unused_bytes_read));
     }
 	/* +++ DIT +++ */
-	Decrypt(backing_buffer, entry.size());
+	Decrypt(backing_buffer, unused_bytes_read);
 	
     // Note that we compute the checksum *before* byte-swapping. The checksum
     // should be on the bytes in the order they appear in the file.
@@ -1029,9 +1027,6 @@ Status BundleReaderDIT::GetValue(const BundleEntryProto& entry, Tensor* val) {
         GetStringBackingBuffer(*ret), &actual_crc32c, need_to_swap_bytes_));
 	
   }
-  /* +++ DIT +++*/
-  uint32 crc32c_ = entry.crc32c();
-  Decrypt(&crc32c_, sizeof(uint32));
   
   if (crc32c::Unmask(crc32c_) != actual_crc32c) {
   //if (crc32c::Unmask(entry.crc32c()) != actual_crc32c) {
@@ -1103,6 +1098,7 @@ Status BundleReaderDIT::GetSliceValue(StringPiece full_tensor_key,
                                    const TensorSlice& slice_spec, Tensor* val) {
   /* +++ DIT +++ */
   full_tensor_key = Decrypt(full_tensor_key);
+  absl::PrintF("[KEY]%s\n", full_tensor_key);
   
   using checkpoint::RegisterTensorSlice;
   using checkpoint::TensorSliceSet;
@@ -1257,9 +1253,6 @@ Status FileOutputBufferDIT::Append(StringPiece data) {
   // In the below, it is critical to calculate the checksum on the actually
   // copied bytes, not the source bytes.  This is because "data" typically
   // points to tensor buffers, which may be concurrently written.
-  
-  /* +++ DIT +++*/
-  data = Encrypt(data);
   
   if (data.size() + position_ <= buffer_size_) {
     // Can fit into the current buffer.
