@@ -938,14 +938,14 @@ Status BundleReaderDIT::GetBundleEntryProto(StringPiece key,
 }
 
 Status BundleReaderDIT::GetValue(const BundleEntryProto& entry, Tensor* val) {
-  //std::printf("[Get Value]\n");
+  std::printf("[Get Value]\n");
   
   Tensor* ret = val;
   const TensorShape stored_shape(TensorShape(entry.shape()));
   if (val->NumElements() == 0) {
     ret = new Tensor(entry.dtype(), stored_shape);
   }
-
+  std::printf(" * [Validates Size]\n");
   // Validates the "size" field.
   if (entry.dtype() != DT_STRING && entry.dtype() != DT_VARIANT) {
     if (entry.size() != ret->TotalBytes()) {
@@ -967,7 +967,8 @@ Status BundleReaderDIT::GetValue(const BundleEntryProto& entry, Tensor* val) {
                               "; expected size is at least ", lower_bound);
     }
   }
-
+  
+  std::printf(" * [Open Data]\n");
   // Open the data file if it has not been opened.
   io::InputBuffer* buffered_file = data_[entry.shard_id()];
   if (buffered_file == nullptr) {
@@ -984,6 +985,7 @@ Status BundleReaderDIT::GetValue(const BundleEntryProto& entry, Tensor* val) {
   uint32 actual_crc32c = 0;
 
   if (DataTypeCanUseMemcpy(entry.dtype())) {
+	std::printf(" * [Mem Copy]\n");
     char* backing_buffer = const_cast<char*>((ret->tensor_data().data()));
     size_t unused_bytes_read;
     if (entry.size() > kBufferSize) {
@@ -1009,6 +1011,7 @@ Status BundleReaderDIT::GetValue(const BundleEntryProto& entry, Tensor* val) {
       TF_RETURN_IF_ERROR(ByteSwapTensor(ret));
     }
   } else if (entry.dtype() == DT_VARIANT) {
+	std::printf(" * [Read Variant]\n");
     if (need_to_swap_bytes_) {
       return errors::Unimplemented(
           "TensorBundle at ", prefix_,
@@ -1022,7 +1025,7 @@ Status BundleReaderDIT::GetValue(const BundleEntryProto& entry, Tensor* val) {
                                          entry.size(), &actual_crc32c));
 	
   } else {
-	
+	std::printf(" * [Read String]\n");
     // Relies on io::InputBuffer's buffering, because we issue many neighboring
     // reads for a single string tensor.
     TF_RETURN_IF_ERROR(ReadStringTensor(
@@ -1031,6 +1034,7 @@ Status BundleReaderDIT::GetValue(const BundleEntryProto& entry, Tensor* val) {
 	
   }
   
+  std::printf(" * [Checksum]\n");
   if (crc32c::Unmask(entry.crc32c()) != actual_crc32c) {
     return errors::DataLoss(
         "Checksum does not match: stored ",
