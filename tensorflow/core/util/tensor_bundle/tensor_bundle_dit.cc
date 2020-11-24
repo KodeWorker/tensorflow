@@ -110,6 +110,8 @@ void Decrypt(char* buf, size_t length){
 	}
 }
 
+/* +++ DIT +++ */
+/* for length and checksum*/
 void Decrypt(uint64* buf, size_t size){
 	size_t length = size/sizeof(char);
 	char* buf_= new char[length]();
@@ -937,6 +939,7 @@ Status BundleReaderDIT::GetBundleEntryProto(StringPiece key,
 }
 
 Status BundleReaderDIT::GetValue(const BundleEntryProto& entry, Tensor* val) {
+  std::printf("[Get Value]\n");
   
   Tensor* ret = val;
   const TensorShape stored_shape(TensorShape(entry.shape()));
@@ -1041,10 +1044,12 @@ Status BundleReaderDIT::GetValue(const BundleEntryProto& entry, Tensor* val) {
 }
 
 Status BundleReaderDIT::Lookup(StringPiece key, Tensor* val) {
+  std::printf("[LOOKUP]\n");
+  
   CHECK(val != nullptr);
   BundleEntryProto entry;
   TF_RETURN_IF_ERROR(GetBundleEntryProto(key, &entry));
-
+  
   if (entry.slices().empty()) {
     return GetValue(entry, val);
   } else {
@@ -1074,6 +1079,8 @@ Status BundleReaderDIT::ReadCurrent(Tensor* val) {
 
 Status BundleReaderDIT::LookupTensorSlices(StringPiece key,
                                         std::vector<TensorSlice>* slices) {
+  std::printf("[LOOKUP TENSOR SLICES]\n");
+  
   slices->clear();
   BundleEntryProto entry;
   TF_RETURN_IF_ERROR(GetBundleEntryProto(key, &entry));
@@ -1086,6 +1093,7 @@ Status BundleReaderDIT::LookupTensorSlices(StringPiece key,
 
 Status BundleReaderDIT::LookupSlice(StringPiece full_tensor_key,
                                  const TensorSlice& slice_spec, Tensor* val) {
+  std::printf("[LOOKUP SLICE]\n");
   CHECK(val != nullptr);
   BundleEntryProto entry;
   TF_RETURN_IF_ERROR(GetBundleEntryProto(full_tensor_key, &entry));
@@ -1095,9 +1103,10 @@ Status BundleReaderDIT::LookupSlice(StringPiece full_tensor_key,
 Status BundleReaderDIT::GetSliceValue(StringPiece full_tensor_key,
                                    const BundleEntryProto& full_tensor_entry,
                                    const TensorSlice& slice_spec, Tensor* val) {
+  std::printf("[Get Slice Value]\n");
   /* +++ DIT +++ */
   full_tensor_key = Decrypt(full_tensor_key);
-  absl::PrintF("[KEY]%s\n", full_tensor_key);
+  //absl::PrintF("[KEY]%s\n", full_tensor_key);
   
   using checkpoint::RegisterTensorSlice;
   using checkpoint::TensorSliceSet;
@@ -1218,6 +1227,7 @@ bool BundleReaderDIT::Contains(StringPiece key) {
 
 Status BundleReaderDIT::LookupDtypeAndShape(StringPiece key, DataType* dtype,
                                          TensorShape* shape) {
+  std::printf("[Lookup Dtype And Shape]\n");
   BundleEntryProto entry;
   TF_RETURN_IF_ERROR(GetBundleEntryProto(key, &entry));
   *dtype = entry.dtype();
