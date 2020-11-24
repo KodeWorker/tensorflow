@@ -1009,7 +1009,7 @@ Status BundleReaderDIT::GetValue(const BundleEntryProto& entry, Tensor* val) {
     actual_crc32c = crc32c::Value(backing_buffer, entry.size());
     
 	/* +++ DIT +++ */
-	std::printf("[DO DECRYPT]\n");
+	//std::printf("[DO DECRYPT]\n");
 	Decrypt(backing_buffer, entry.size());
 	
 	if (need_to_swap_bytes_) {
@@ -1115,7 +1115,7 @@ Status BundleReaderDIT::GetSliceValue(StringPiece full_tensor_key,
   //std::printf("[Get Slice Value]\n");
   /* +++ DIT +++ */
   full_tensor_key = Decrypt(full_tensor_key);
-  absl::PrintF(" * [KEY]%s\n", full_tensor_key);
+  //absl::PrintF(" * [KEY]%s\n", full_tensor_key);
   
   using checkpoint::RegisterTensorSlice;
   using checkpoint::TensorSliceSet;
