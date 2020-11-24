@@ -212,10 +212,10 @@ Status ReadStringTensor(io::InputBuffer* buffered_file, size_t num_elements,
     size_t bytes_read = 0;
     TF_RETURN_IF_ERROR(
         buffered_file->ReadNBytes(string_length, &(*buffer)[0], &bytes_read));
+    *actual_crc32c = crc32c::Extend(*actual_crc32c, buffer->data(), bytes_read);
+	
 	/* +++ DIT +++ */
 	Decrypt(&(*buffer)[0], bytes_read);
-	
-    *actual_crc32c = crc32c::Extend(*actual_crc32c, buffer->data(), bytes_read);
   }
   return Status::OK();
 }
@@ -247,11 +247,11 @@ Status ReadVariantTensor(io::InputBuffer* buffered_file, Tensor* ret,
     size_t bytes_read = 0;
     TF_RETURN_IF_ERROR(
         buffered_file->ReadNBytes(string_length, &buffer[0], &bytes_read));
+    *actual_crc32c = crc32c::Extend(*actual_crc32c, buffer.data(), bytes_read);
     /* +++ DIT +++ */
 	Decrypt(&buffer[0], bytes_read);
 	
-    *actual_crc32c = crc32c::Extend(*actual_crc32c, buffer.data(), bytes_read);
-    VariantTensorDataProto proto;
+	VariantTensorDataProto proto;
     if (!proto.ParseFromString(buffer)) {
       return errors::DataLoss("Unable to parse VariantTensorDataProto from ",
                               "buffer of size ", string_length, ". ",
@@ -927,7 +927,6 @@ Status BundleReaderDIT::GetBundleEntryProto(StringPiece key,
 
   BundleEntryProto entry_copy;
   TF_RETURN_IF_ERROR(
-      /* +++ DIT +++*/
       ParseEntryProto(iter_->key(), iter_->value(), &entry_copy));
   if (!TensorShape::IsValid(entry_copy.shape())) {
     return errors::DataLoss("Invalid tensor shape: ", key, " ",
@@ -999,13 +998,14 @@ Status BundleReaderDIT::GetValue(const BundleEntryProto& entry, Tensor* val) {
       TF_RETURN_IF_ERROR(buffered_file->ReadNBytes(entry.size(), backing_buffer,
                                                    &unused_bytes_read));
     }
+	// Note that we compute the checksum *before* byte-swapping. The checksum
+    // should be on the bytes in the order they appear in the file.
+    actual_crc32c = crc32c::Value(backing_buffer, entry.size());
+    
 	/* +++ DIT +++ */
 	Decrypt(backing_buffer, unused_bytes_read);
 	
-    // Note that we compute the checksum *before* byte-swapping. The checksum
-    // should be on the bytes in the order they appear in the file.
-    actual_crc32c = crc32c::Value(backing_buffer, entry.size());
-    if (need_to_swap_bytes_) {
+	if (need_to_swap_bytes_) {
       TF_RETURN_IF_ERROR(ByteSwapTensor(ret));
     }
   } else if (entry.dtype() == DT_VARIANT) {
@@ -1106,7 +1106,7 @@ Status BundleReaderDIT::GetSliceValue(StringPiece full_tensor_key,
   std::printf("[Get Slice Value]\n");
   /* +++ DIT +++ */
   full_tensor_key = Decrypt(full_tensor_key);
-  //absl::PrintF("[KEY]%s\n", full_tensor_key);
+  absl::PrintF(" * [KEY]%s\n", full_tensor_key);
   
   using checkpoint::RegisterTensorSlice;
   using checkpoint::TensorSliceSet;
