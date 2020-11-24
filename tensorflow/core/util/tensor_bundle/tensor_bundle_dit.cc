@@ -990,11 +990,11 @@ Status BundleReaderDIT::GetValue(const BundleEntryProto& entry, Tensor* val) {
     char* backing_buffer = const_cast<char*>((ret->tensor_data().data()));
     size_t unused_bytes_read;
     if (entry.size() > kBufferSize) {
-	  std::printf("[BUFFER READ OP]\n");
+	  //std::printf("[BUFFER READ OP]\n");
       StringPiece sp;
       TF_RETURN_IF_ERROR(buffered_file->file()->Read(
           entry.offset(), entry.size(), &sp, backing_buffer));
-      std::printf(" * [ENTRY SIZE]%d\n", entry.size());
+      //std::printf(" * [ENTRY SIZE]%d\n", entry.size());
       if (sp.data() != backing_buffer) {
         memmove(backing_buffer, sp.data(), entry.size());
       }
@@ -1010,7 +1010,7 @@ Status BundleReaderDIT::GetValue(const BundleEntryProto& entry, Tensor* val) {
     
 	/* +++ DIT +++ */
 	std::printf("[DO DECRYPT]\n");
-	Decrypt(backing_buffer, unused_bytes_read);
+	Decrypt(backing_buffer, entry.size());
 	
 	if (need_to_swap_bytes_) {
       TF_RETURN_IF_ERROR(ByteSwapTensor(ret));
