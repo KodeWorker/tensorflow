@@ -487,7 +487,8 @@ Status PadAlignment(FileOutputBufferDIT* out, int alignment, int64* size) {
     return Status::OK();
   }
   int bytes_to_write = alignment - bytes_over;
-  Status status = out->Append(string(bytes_to_write, '\0'));
+  /* +++ DIT +++ */
+  Status status = out->Append(Encrypt(string(bytes_to_write, '\0')));
   if (status.ok()) {
     *size += bytes_to_write;
   }
@@ -985,20 +986,21 @@ Status BundleReaderDIT::GetValue(const BundleEntryProto& entry, Tensor* val) {
   uint32 actual_crc32c = 0;
 
   if (DataTypeCanUseMemcpy(entry.dtype())) {
-	std::printf("[Mem Copy]\n");
+	//std::printf("[Mem Copy]\n");
     char* backing_buffer = const_cast<char*>((ret->tensor_data().data()));
     size_t unused_bytes_read;
     if (entry.size() > kBufferSize) {
-	  std::printf("[BUFFER READ OP1]\n");
+	  std::printf("[BUFFER READ OP]\n");
       StringPiece sp;
       TF_RETURN_IF_ERROR(buffered_file->file()->Read(
           entry.offset(), entry.size(), &sp, backing_buffer));
-      
+      std::printf(" * [ENTRY SIZE]%d\n", entry.size());
       if (sp.data() != backing_buffer) {
         memmove(backing_buffer, sp.data(), entry.size());
       }
+	  
     } else {
-	  std::printf("[BUFFER READ OP2]\n");
+	  //std::printf("[BUFFER READ OP2]\n");
       TF_RETURN_IF_ERROR(buffered_file->ReadNBytes(entry.size(), backing_buffer,
                                                    &unused_bytes_read));
     }
