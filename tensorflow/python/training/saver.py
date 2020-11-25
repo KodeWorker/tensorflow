@@ -1143,9 +1143,7 @@ class Saver(object):
            global_step=None,
            latest_filename=None,
            meta_graph_suffix="meta",
-           # +++ DIT : write_meta_graph=True -> False
-           write_meta_graph=False,
-           # --- DIT : write_meta_graph=True -> False
+           write_meta_graph=True,
            write_state=True,
            strip_default_attrs=False,
            save_debug_info=False):
