@@ -112,6 +112,7 @@ void Decrypt(char* buf, size_t length){
 
 /* +++ DIT +++ */
 /* for length and checksum*/
+/*
 void Decrypt(uint64* buf, size_t size){
 	size_t length = size/sizeof(char);
 	char* buf_= new char[length]();
@@ -139,6 +140,7 @@ void Decrypt(uint32* buf, size_t size){
 	
 	std::memcpy(buf, &buf_, length);
 }
+*/
 
 // Reads "num_elements" string elements from file[offset, offset+size) into the
 // length-N "destination".  Discards the original content of "destination".
