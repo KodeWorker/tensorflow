@@ -190,8 +190,9 @@ class PythonStringStateSaveable(PythonStateSaveable):
 
 class CheckpointPosition(object):
   """Indicates a position within a `_CheckpointRestoreCoordinator`."""
-
+  # +++ DIT: default write_version=saver_pb2.SaverDef.DIT
   def __init__(self, checkpoint, proto_id, write_version=saver_pb2.SaverDef.DIT):
+  # --- DIT: default write_version=saver_pb2.SaverDef.DIT
     """Specify an object within a checkpoint.
 
     Args:
@@ -305,6 +306,7 @@ class CheckpointPosition(object):
           #    dtypes=[base_type],
           #    name="%s_checkpoint_read" % (serialized_tensor.name,))
           
+          # +++ DIT: check for restore_dit
           if self._write_version == saver_pb2.SaverDef.V1 or self._write_version == saver_pb2.SaverDef.V2:
             value, = io_ops.restore_v2(
               prefix=self._checkpoint.save_path_tensor,
@@ -321,7 +323,7 @@ class CheckpointPosition(object):
               name="%s_checkpoint_read" % (serialized_tensor.name,))
           else:
             raise RuntimeError("Unexpected write_version: " + self._write_version)
-          
+          # --- DIT: check for restore_dit
           
         # Copy the value to the current device if necessary.
         value_tensors[serialized_tensor.name] = array_ops.identity(value)

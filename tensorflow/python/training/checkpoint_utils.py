@@ -391,7 +391,9 @@ def _set_checkpoint_initializer(variable,
                                 tensor_name,
                                 slice_spec,
                                 name="checkpoint_initializer",
+                                # +++ DIT: default write_version=saver_pb2.SaverDef.DIT
                                 write_version=saver_pb2.SaverDef.DIT):
+                                # --- DIT: default write_version=saver_pb2.SaverDef.DIT
   """Overrides given variable's initialization op.
 
   Sets variable initializer to assign op that initializes variable from tensor's
@@ -413,13 +415,14 @@ def _set_checkpoint_initializer(variable,
     
     #restore_op = io_ops.restore_v2(
     #    ckpt_file, [tensor_name], [slice_spec], [base_type], name=name)[0]
+    # +++ DIT: check for restore_dit
     if self._write_version == saver_pb2.SaverDef.V1 or self._write_version == saver_pb2.SaverDef.V2:
       restore_op = io_ops.restore_v2(ckpt_file, [tensor_name], [slice_spec], [base_type], name=name)[0]
     elif self._write_version == saver_pb2.SaverDef.DIT:
       restore_op = io_ops.restore_dit(ckpt_file, [tensor_name], [slice_spec], [base_type], name=name)[0]
     else:
       raise RuntimeError("Unexpected write_version: " + self._write_version)
-
+    # --- DIT: check for restore_dit
     names_to_saveables = saveable_object_util.op_list_to_dict([variable])
     saveable_objects = []
     for name, op in names_to_saveables.items():

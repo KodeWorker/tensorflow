@@ -298,8 +298,9 @@ class _CheckpointRestoreCoordinator(object):
 
 class _NameBasedRestoreCoordinator(object):
   """Keeps the status of a name-based checkpoint restore."""
-
+  # +++ DIT: default: write_version=saver_pb2.SaverDef.DIT
   def __init__(self, save_path, dtype_map=None, write_version=saver_pb2.SaverDef.DIT):
+  # --- DIT: default: write_version=saver_pb2.SaverDef.DIT
     self.save_path = save_path
     self.dtype_map = dtype_map
     self._write_version = write_version
@@ -362,12 +363,7 @@ class _NameBasedRestoreCoordinator(object):
         if spec.name in self.dtype_map:
           with ops.device("cpu:0"):
             
-            #restored, = io_ops.restore_v2(
-            #    prefix=self.save_path,
-            #    tensor_names=[spec.name],
-            #    shape_and_slices=[""],
-            #    dtypes=[self.dtype_map[spec.name]],
-            #    name="%s_checkpoint_read" % (spec.name,))
+            # +++ DIT: check for restore_dit
             if self._write_version == saver_pb2.SaverDef.V1 or self._write_version == saver_pb2.SaverDef.V2:
               restored, = io_ops.restore_v2(
                 prefix=self.save_path,
@@ -384,6 +380,7 @@ class _NameBasedRestoreCoordinator(object):
                 name="%s_checkpoint_read" % (spec.name,))
             else:
               raise RuntimeError("Unexpected write_version: " + self._write_version)
+            # --- DIT: check for restore_dit
             
           restored_tensors.append(array_ops.identity(restored))
         else:

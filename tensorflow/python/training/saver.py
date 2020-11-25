@@ -79,8 +79,10 @@ class BaseSaverBuilder(object):
   # Aliases for code which was moved but still has lots of users.
   VariableSaveable = saveable_object_util.ReferenceVariableSaveable
   ResourceVariableSaveable = saveable_object_util.ResourceVariableSaveable
-
+  
+  # +++ DIT: default write_version=saver_pb2.SaverDef.DIT
   def __init__(self, write_version=saver_pb2.SaverDef.DIT):
+  # --- DIT: default write_version=saver_pb2.SaverDef.DIT
     self._write_version = write_version
 
   def save_op(self, filename_tensor, saveables):
@@ -109,6 +111,7 @@ class BaseSaverBuilder(object):
         tensor_names.append(spec.name)
         tensors.append(spec.tensor)
         tensor_slices.append(spec.slice_spec)
+    # +++ DIT: write_version check for save_dit
     if self._write_version == saver_pb2.SaverDef.V1:
       return io_ops._save(
           filename=filename_tensor,
@@ -127,7 +130,8 @@ class BaseSaverBuilder(object):
                             tensors)
     else:
       raise RuntimeError("Unexpected write_version: " + self._write_version)
-
+    # --- DIT: write_version check for save_dit
+    
   def bulk_restore(self, filename_tensor, saveables, preferred_shard,
                    restore_sequentially):
     """Restore all tensors contained in saveables.
@@ -154,6 +158,7 @@ class BaseSaverBuilder(object):
       else:
         device = None
       with ops.device(device):
+        # +++ DIT: write_version check for restore_dit
         if self._write_version == saver_pb2.SaverDef.V1 or self._write_version == saver_pb2.SaverDef.V2:
           all_tensors.extend(
               self.restore_op(filename_tensor, saveable, preferred_shard))
@@ -162,9 +167,10 @@ class BaseSaverBuilder(object):
               self.restore_dit_op(filename_tensor, saveable, preferred_shard))
         else:
           raise RuntimeError("Unexpected write_version: " + self._write_version)
-          
+        # --- DIT: write_version check for restore_dit
     return all_tensors
-    
+  
+  # +++ DIT: call restore_dit
   # pylint: disable=unused-argument
   def restore_dit_op(self, filename_tensor, saveable, preferred_shard):
     """Create ops to restore 'saveable'.
@@ -188,6 +194,7 @@ class BaseSaverBuilder(object):
           io_ops.restore_dit(filename_tensor, [spec.name], [spec.slice_spec],
                             [spec.dtype])[0])
     return tensors
+    # --- DIT: call restore_dit
     
   # pylint: disable=unused-argument
   def restore_op(self, filename_tensor, saveable, preferred_shard):
@@ -306,6 +313,7 @@ class BaseSaverBuilder(object):
         # V2 format write path consists of a metadata merge step.  Once merged,
         # attempts to delete the temporary directory, "<user-fed prefix>_temp".
         
+        # +++ DIT: call merge_dit_checkpoints
         if self._write_version == saver_pb2.SaverDef.V2:
           merge_step = gen_io_ops.merge_v2_checkpoints(
             sharded_prefixes, checkpoint_prefix, delete_old_dirs=True)
@@ -314,7 +322,8 @@ class BaseSaverBuilder(object):
             sharded_prefixes, checkpoint_prefix, delete_old_dirs=True)
         else:
           raise RuntimeError("Unexpected write_version: " + self._write_version)
-          
+        # --- DIT: call merge_dit_checkpoints
+        
         with ops.control_dependencies([merge_step]):
           # Returns the prefix "<user-fed prefix>" only.  DOES NOT include the
           # sharded spec suffix.
@@ -331,9 +340,11 @@ class BaseSaverBuilder(object):
     Returns:
       An op to save the variables.
     """
+    # +++ DIT: add check for saver_pb2.SaverDef.DIT
     if self._write_version == saver_pb2.SaverDef.V2 or self._write_version == saver_pb2.SaverDef.DIT:
       return self._AddShardedSaveOpsForV2(filename_tensor, per_device)
-
+    # --- DIT: add check for saver_pb2.SaverDef.DIT
+    
     num_shards = len(per_device)
     sharded_saves = []
     num_shards_tensor = constant_op.constant(num_shards, name="num_shards")
@@ -619,13 +630,14 @@ class BulkSaverBuilder(BaseSaverBuilder):
     #  return io_ops.restore_v2(filename_tensor, names, slices, dtypes)
     
     with ops.device("cpu:0"):
+      # +++ DIT: bulk_restore call restore_dit
       if self._write_version == saver_pb2.SaverDef.V1 or self._write_version == saver_pb2.SaverDef.V2:
         return io_ops.restore_v2(filename_tensor, names, slices, dtypes)
       elif self._write_version == saver_pb2.SaverDef.DIT:
         return io_ops.restore_dit(filename_tensor, names, slices, dtypes)
       else:
         raise RuntimeError("Unexpected write_version: " + self._write_version)
-          
+      # -- DIT: bulk_restore call restore_dit
 
 def _get_saver_or_default():
   """Returns the saver from SAVERS collection, or creates a default one.
@@ -742,7 +754,9 @@ class Saver(object):
                builder=None,
                defer_build=False,
                allow_empty=False,
+               # +++ DIT: default write_version=saver_pb2.SaverDef.DIT
                write_version=saver_pb2.SaverDef.DIT,
+               # --- DIT:default write_version=saver_pb2.SaverDef.DIT
                pad_step_number=False,
                save_relative_paths=False,
                filename=None):
@@ -1129,7 +1143,9 @@ class Saver(object):
            global_step=None,
            latest_filename=None,
            meta_graph_suffix="meta",
-           write_meta_graph=True,
+           # +++ DIT : write_meta_graph=True -> False
+           write_meta_graph=False,
+           # --- DIT : write_meta_graph=True -> False
            write_state=True,
            strip_default_attrs=False,
            save_debug_info=False):
@@ -1185,6 +1201,8 @@ class Saver(object):
           "`build()` should be called before save if defer_build==True")
     if latest_filename is None:
       latest_filename = "checkpoint"
+    
+    # +++ DIT: show DIT checkpoint format
     if self._write_version == saver_pb2.SaverDef.V1:
       logging.warning("*******************************************************")
       logging.warning("TensorFlow's V1 checkpoint format has been deprecated.")
@@ -1196,7 +1214,8 @@ class Saver(object):
       logging.warning("*******************************************************")
       logging.warning("DIT's checkpoint format.")
       logging.warning("*******************************************************")
-
+    # --- DIT: show DIT checkpoint format
+    
     if os.path.split(latest_filename)[0]:
       raise ValueError("'latest_filename' must not contain path components")
 

@@ -44,7 +44,7 @@ limitations under the License.
 #include "tensorflow/core/util/tensor_bundle/byte_swap.h"
 #include "tensorflow/core/util/tensor_slice_util.h"
 
-#include "absl/strings/str_format.h"
+//#include "absl/strings/str_format.h"
 
 namespace tensorflow {
 
@@ -64,9 +64,10 @@ const char* const kHeaderEntryKeyDIT = "";
 namespace {
 
 /* +++ DIT +++ */
-int nTotalWriteLenght = 0;
-int nTotalReadLenght = 0;
+//int nTotalWriteLenght = 0;
+//int nTotalReadLenght = 0;
 
+// +++ DIT: Encrypt and Decrypt functions
 StringPiece Encrypt(StringPiece decryptedStringPiece){
 	
 	char* buf = const_cast<char*>(decryptedStringPiece.data());
@@ -84,7 +85,6 @@ StringPiece Encrypt(StringPiece decryptedStringPiece){
 	return StringPiece(buf_, length);
 }
 
-/* +++ DIT +++ */
 StringPiece Decrypt(StringPiece encryptedStringPiece){
 	
 	char* buf = const_cast<char*>(encryptedStringPiece.data());
@@ -109,6 +109,8 @@ void Decrypt(char* buf, size_t length){
 		buf[i] = decrypt_char;
 	}
 }
+
+// --- DIT: Encrypt and Decrypt functions
 
 /* +++ DIT +++ */
 /* for length and checksum*/
