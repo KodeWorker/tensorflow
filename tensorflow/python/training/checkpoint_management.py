@@ -444,7 +444,9 @@ def get_checkpoint_mtimes(checkpoint_prefixes):
     instructions="Use standard file APIs to delete files with this prefix.")
 @tf_export(v1=["train.remove_checkpoint"])
 def remove_checkpoint(checkpoint_prefix,
-                      checkpoint_format_version=saver_pb2.SaverDef.V2,
+                      # +++ DIT: check saver version V2 -> DIT
+                      checkpoint_format_version=saver_pb2.SaverDef.DIT,
+                      # --- DIT: check saver version V2 -> DIT
                       meta_graph_suffix="meta"):
   """Removes a checkpoint given by `checkpoint_prefix`.
 
@@ -458,7 +460,9 @@ def remove_checkpoint(checkpoint_prefix,
   """
   _delete_file_if_exists(
       meta_graph_filename(checkpoint_prefix, meta_graph_suffix))
-  if checkpoint_format_version == saver_pb2.SaverDef.V2:
+  # +++ DIT: check saver version V2 or DIT
+  if checkpoint_format_version == saver_pb2.SaverDef.V2 or checkpoint_format_version == saver_pb2.SaverDef.DIT:
+  # --- DIT: check saver version V2 or DIT
     # V2 has a metadata file and some data files.
     _delete_file_if_exists(checkpoint_prefix + ".index")
     _delete_file_if_exists(checkpoint_prefix + ".data-?????-of-?????")
